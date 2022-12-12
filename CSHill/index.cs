@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Text;
 using SimpleTCP;
+using System.IO;
+using System.Linq;
 
 class Server
 {
@@ -10,7 +12,10 @@ class Server
         server.ClientConnected += (sender, e) =>
         {
             Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) connected!");
-            Console.WriteLine(e);
+            Game.Players.Add(new Player(e));
+            var plyr = Game.Players.Find(p => p.NetId == Player._NetId);
+            Console.WriteLine(plyr.NetId);
+            
         };
 
         server.ClientDisconnected += (sender, e) => Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) disconnected!");
@@ -20,8 +25,6 @@ class Server
             foreach(var data in e.Data)
                 Console.Write(data.ToString()+" ");
             Console.WriteLine();
-            //Console.WriteLine(e.Data.ToString());
-            //Console.WriteLine(e.TcpClient.Client);
         };
 
         server.Start(42480);
@@ -32,7 +35,6 @@ class Server
         }
     } 
 }
-
 
 
 
