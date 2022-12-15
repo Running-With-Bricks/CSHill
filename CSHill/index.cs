@@ -16,7 +16,6 @@ class Server
             Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) connected!");
             Game.Players.Add(new Player(e));
             //var plyr = Game.Players.Find(p => p.NetId == Player._NetId);
-            Console.WriteLine(Game.Players.Count);
         };
 
         server.ClientDisconnected += (sender, e) =>
@@ -29,7 +28,6 @@ class Server
         {
             var plyr = Game.Players.Find(p => p.Socket == e.TcpClient);
             plyr.HandleBytes(e.Data);
-
         };
 
         server.Start(42480);
