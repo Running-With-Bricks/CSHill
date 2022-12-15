@@ -3,28 +3,33 @@ using System.Text;
 using SimpleTCP;
 using System.IO;
 using System.Linq;
-
+using System.Net.Sockets;
 class Server
 {
-    static void Main() {
+    static void Main()
+    {
         var server = new SimpleTcpServer();
 
         server.ClientConnected += (sender, e) =>
         {
+            Console.WriteLine(e);
             Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) connected!");
             Game.Players.Add(new Player(e));
-            var plyr = Game.Players.Find(p => p.NetId == Player._NetId);
-            Console.WriteLine(plyr.NetId);
-            
+            //var plyr = Game.Players.Find(p => p.NetId == Player._NetId);
+            Console.WriteLine(Game.Players.Count);
         };
 
-        server.ClientDisconnected += (sender, e) => Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) disconnected!");
+        server.ClientDisconnected += (sender, e) =>
+        {
+            Game.Players.Remove(Game.Players.Find(p => p.Socket == e));
+            Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) disconnected!");
+        };
 
         server.DataReceived += (sender, e) =>
         {
-            foreach(var data in e.Data)
-                Console.Write(data.ToString()+" ");
-            Console.WriteLine();
+            var plyr = Game.Players.Find(p => p.Socket == e.TcpClient);
+            plyr.HandleBytes(e.Data);
+
         };
 
         server.Start(42480);
@@ -33,7 +38,7 @@ class Server
         {
 
         }
-    } 
+    }
 }
 
 
