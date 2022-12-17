@@ -12,16 +12,16 @@ public class Player
     public static int _NetId = 0; //global netid for all players
     public string Token;
     public Vector3 Position;
-    public Player(TcpClient socket)
+    public Player(string _IpPort)
     {
-        Socket = socket;
+        IpPort = _IpPort;
         _NetId++;
         NetId = _NetId;
     }
 
     //NETWORKING STUFF
 
-    public TcpClient Socket;
+    public string IpPort;
     private byte[] CurrentBytes = { };
     public void HandleBytes(byte[] newBytes)
     {
@@ -69,7 +69,7 @@ public class Player
                            .u8(0)
                            .u32(1)
                            .String("CSHill Test")
-                           .send(Socket);
+                           .send(IpPort);
 
                     new PacketBuilder(17)
 
@@ -86,7 +86,7 @@ public class Player
 
                         .u32(256)
                         .Float(1)
-                        .send(Socket);
+                        .send(IpPort);
                     break;
                 }
             case 2:
@@ -96,7 +96,7 @@ public class Player
                     if (packet.String() != "chat") return;
                     PacketBuilder package = new PacketBuilder(6)
                         .String(packet.String())
-                        .send(Socket);
+                        .send(IpPort);
 
                     break;
                 }

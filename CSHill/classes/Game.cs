@@ -15,5 +15,9 @@ public static class Game
     public class Environment
     {
         public static Color ambient;
+        public static Color baseColor;
+        public static Color skyColor;
+        public static int baseSize;
+        public static int sunIntensity;
     }
 }

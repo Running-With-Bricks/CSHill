@@ -119,11 +119,12 @@ public class PacketBuilder
         return this;
     }
 
-    public PacketBuilder send(TcpClient Socket)
+    public PacketBuilder send(string IpPort)
     {
+
         Data = UIntV.WriteUIntV(Data);
-        NetworkStream ns = Socket.GetStream();
-        ns.Write(Data, 0, Data.Length);
+        Server.server.Send(IpPort, Data);
+
 
         return this;
     }

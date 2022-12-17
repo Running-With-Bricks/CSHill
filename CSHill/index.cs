@@ -1,39 +1,48 @@
 ﻿using System;
 using System.Text;
-using SimpleTCP;
+using SuperSimpleTcp;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Net;
+
 class Server
 {
-    public static SimpleTcpServer server = new();
+    public static SimpleTcpServer server = new("0.0.0.0",42480);
     static void Main()
     {
 
-        server.ClientConnected += (sender, e) =>
+        server.Start();
+
+        //foreach (var file in Directory.GetFiles("./"))
+        //{
+        //    Console.WriteLine(file);
+        //}
+
+        server.Events.ClientConnected += (sender, e) =>
         {
-            Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) connected! {e}");
-            Game.Players.Add(new Player(e));
+            Console.WriteLine($"Client ({e.IpPort}) connected!");
+            Game.Players.Add(new Player(e.IpPort));
         };
 
-        server.ClientDisconnected += (sender, e) =>
+        server.Events.ClientDisconnected += (sender, e) =>
         {
-            Game.Players.Remove(Game.Players.Find(p => p.Socket == e));
-            Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) disconnected!");
+            Game.Players.Remove(Game.Players.Find(p => p.IpPort == e.IpPort));
+            Console.WriteLine($"Client ({e.IpPort}) disconnected!");
         };
 
-        server.DataReceived += (sender, e) =>
+        server.Events.DataReceived += (sender, e) =>
         {
-            var plyr = Game.Players.Find(p => p.Socket == e.TcpClient);
-            plyr.HandleBytes(e.Data);
+            var plyr = Game.Players.Find(p => p.IpPort == e.IpPort);
+            plyr.HandleBytes(e.Data.ToArray());
+
         };
 
-        server.Start(42480);
+        //while (true)
+        //{
 
-        while (true)
-        {
+        //}
 
-        }
     }
 }
 
