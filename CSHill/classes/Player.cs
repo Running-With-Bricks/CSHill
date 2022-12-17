@@ -9,7 +9,9 @@ public class Player
 {
     public int NetId;
     public string Name;
-
+    public static int _NetId = 0; //global netid for all players
+    public string Token;
+    public Vector3 Position;
     public Player(TcpClient socket)
     {
         Socket = socket;
@@ -18,18 +20,17 @@ public class Player
     }
 
     //NETWORKING STUFF
-    public static int _NetId = 0; //global netid for all players
-    public TcpClient Socket;
 
+    public TcpClient Socket;
     private byte[] CurrentBytes = { };
     public void HandleBytes(byte[] newBytes)
     {
 
         CurrentBytes = CurrentBytes.Concat(newBytes).ToArray();//add new bytes
-        var (messageSize, end) = PacketBuilder.ReadUIntV(CurrentBytes);//get uintv stuff
+        var (messageSize, end) = UIntV.ReadUIntV(CurrentBytes);//get uintv stuff
         if (messageSize + end > CurrentBytes.Length) return; //return if there arent enough bytes
 
-        Console.WriteLine("\nmessageSize: {0} | end: {1} | netId: {2} | remain: {3}", messageSize, end, NetId, CurrentBytes.Length);//debug stuff
+        if (Game.Debug.PacketInspector) Console.WriteLine("\nmessageSize: {0} | end: {1} | netId: {2} | remain: {3}", messageSize, end, NetId, CurrentBytes.Length);//debug stuff
 
         byte[] workBytes = new byte[messageSize]; //make new array with the size to fit the bytes we need
         Array.Copy(CurrentBytes, end, workBytes, 0, messageSize + end - 1); //add the bytes we need
@@ -38,13 +39,71 @@ public class Player
         if (workBytes[0] == 120)//check for compression
             workBytes = ZlibStream.UncompressBuffer(workBytes);
 
-        foreach (var data in workBytes) //REMOVE ME!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            Console.Write(data.ToString() + " ");
-        Console.WriteLine();    
+        if (Game.Debug.PacketInspector)
+        {
+            foreach (var data in workBytes)
+                Console.Write(data.ToString() + " ");
+            Console.WriteLine();
+        }
 
         if (CurrentBytes.Length > 0) HandleBytes(new byte[0]);
-        
+
         //now do stuff here with workBytes
+        PacketHandler packet = new PacketHandler(workBytes);
+        switch (packet.u8())
+        {
+            case 1://authenitication
+                {
+                    if (Token != null) return;
+                    Token = packet.String();
+                    Console.WriteLine(packet.String());//version
+
+                    //check for auth here
+
+                    new PacketBuilder(1)
+                           .u32((uint)NetId)
+                           .u32(1)
+                           .u32((uint)NetId)
+                           .String("josh")
+                           .u8(0)
+                           .u8(0)
+                           .u32(1)
+                           .String("CSHill Test")
+                           .send(Socket);
+
+                    new PacketBuilder(17)
+
+                        .u32(1)
+                        .u32(1)
+
+                        .Float(1)
+                        .Float(1)
+                        .Float(1)
+
+                        .Float(4)
+                        .Float(4)
+                        .Float(4)
+
+                        .u32(256)
+                        .Float(1)
+                        .send(Socket);
+                    break;
+                }
+            case 2:
+                break;
+            case 3:
+                {
+                    if (packet.String() != "chat") return;
+                    PacketBuilder package = new PacketBuilder(6)
+                        .String(packet.String())
+                        .send(Socket);
+
+                    break;
+                }
+            default:
+                break;
+        }
+
 
     }
 

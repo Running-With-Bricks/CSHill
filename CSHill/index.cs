@@ -6,16 +6,14 @@ using System.Linq;
 using System.Net.Sockets;
 class Server
 {
+    public static SimpleTcpServer server = new();
     static void Main()
     {
-        var server = new SimpleTcpServer();
 
         server.ClientConnected += (sender, e) =>
         {
-            Console.WriteLine(e);
-            Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) connected!");
+            Console.WriteLine($"Client ({e.Client.RemoteEndPoint}) connected! {e}");
             Game.Players.Add(new Player(e));
-            //var plyr = Game.Players.Find(p => p.NetId == Player._NetId);
         };
 
         server.ClientDisconnected += (sender, e) =>
