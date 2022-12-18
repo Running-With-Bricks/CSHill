@@ -98,7 +98,8 @@
     <Compile Include="classes\Player.cs" />
     <Compile Include="index.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="scripts\world.cs" />
+    <Compile Include="handy\world.cs" />
+    <Compile Include="user_scripts\Example.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -116,6 +117,10 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="config.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -121,11 +121,8 @@ public class PacketBuilder
 
     public PacketBuilder send(string IpPort)
     {
-
         Data = UIntV.WriteUIntV(Data);
         Server.server.Send(IpPort, Data);
-
-
         return this;
     }
 }

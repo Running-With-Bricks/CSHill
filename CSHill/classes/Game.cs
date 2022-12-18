@@ -10,14 +10,21 @@ public static class Game
     public static List<Brick> Bricks = new List<Brick>();
     public static class Debug
     {
-        public static bool PacketInspector = true;
+        public static bool PacketInspector = false;
+        public static bool senbrkins = false;
     }
-    public class Environment
+    public static class Environment
     {
         public static Color ambient;
         public static Color baseColor;
         public static Color skyColor;
         public static int baseSize;
         public static int sunIntensity;
+    }
+    public static class Config
+    {
+        public static string mapName;
+        public static string mapDirectory;
+        public static string hostKey;
     }
 }

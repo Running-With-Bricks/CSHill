@@ -49,52 +49,53 @@ public class Player
         if (CurrentBytes.Length > 0) HandleBytes(new byte[0]);
 
         //now do stuff here with workBytes
-        PacketHandler packet = new PacketHandler(workBytes);
+        PacketHandler packet = new(workBytes);
         switch (packet.u8())
         {
             case 1://authenitication
                 {
                     if (Token != null) return;
                     Token = packet.String();
-                    Console.WriteLine(packet.String());//version
+                    //Console.WriteLine(packet.String());//version
 
                     //check for auth here
 
                     new PacketBuilder(1)
-                           .u32((uint)NetId)
-                           .u32(1)
-                           .u32((uint)NetId)
-                           .String("josh")
-                           .u8(0)
-                           .u8(0)
-                           .u32(1)
-                           .String("CSHill Test")
+                           .u32((uint)NetId)   //netid
+                           .u32((uint)(Game.Bricks.Count))//brickcount
+                           .u32((uint)NetId)    //userid
+                           .String("josh")      //name
+                           .u8(0)               //admin
+                           .u8(0)               //membership
+                           .u32(1)              //gameid
+                           .String("CSHill Test")//gamename
                            .send(IpPort);
 
-                    new PacketBuilder(17)
-
-                        .u32(1)
-                        .u32(1)
-
-                        .Float(1)
-                        .Float(1)
-                        .Float(1)
-
-                        .Float(4)
-                        .Float(4)
-                        .Float(4)
-
-                        .u32(256)
-                        .Float(1)
+                    new PacketBuilder(7)
+                        .String("BaseSize")
+                        .u32((uint)(Game.Environment.baseSize))
                         .send(IpPort);
+
+                    new scripts.world.SendBRK(IpPort);
+                    string attributes = "bci";
+                    new PacketBuilder(4)
+                        .String(attributes)
+                        .u32((uint)NetId)
+                        .String("orbit")
+                        .u32((uint)NetId)
+                        .u8(1)
+                        .send(IpPort);
+
                     break;
                 }
             case 2:
-                break;
+                {
+                    break;
+                }
             case 3:
                 {
                     if (packet.String() != "chat") return;
-                    PacketBuilder package = new PacketBuilder(6)
+                    new PacketBuilder(6)
                         .String(packet.String())
                         .send(IpPort);
 
