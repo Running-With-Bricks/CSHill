@@ -9,29 +9,21 @@ using System.Threading.Tasks;
 using System.Xml;
 class Server
 {
-    public static SimpleTcpServer server = new("0.0.0.0", 42480);
+    public static SimpleTcpServer server;
     static void Main()
     {
-
-        server.Start();
-
         XmlDocument doc = new();
         doc.Load("./config.xml");
         Game.Config.mapName = doc.GetElementsByTagName("mapName")[0].InnerText;
         Game.Config.mapDirectory = doc.GetElementsByTagName("mapDirectory")[0].InnerText;
         Game.Config.hostKey = doc.GetElementsByTagName("hostKey")[0].InnerText;
+        Game.Config.local = doc.GetElementsByTagName("local")[0].InnerText;
 
-        try
-        {
-            new scripts.world.LoadBRK(Game.Config.mapDirectory + Game.Config.mapName);
-        }
-        catch (Exception error)
-        {
-            Console.WriteLine(error);
-        }
-        
+        server = new("0.0.0.0", int.Parse(doc.GetElementsByTagName("port")[0].InnerText));
+        server.Start();
+        Console.WriteLine("Listening for connections on port {0}", doc.GetElementsByTagName("port")[0].InnerText);
 
-        
+        new scripts.world.LoadBRK(Game.Config.mapDirectory + Game.Config.mapName);
 
         server.Events.ClientConnected += (sender, e) =>
         {

@@ -4,19 +4,44 @@ using System.Text;
 using System.Net.Sockets;
 using Ionic.Zlib;
 using System.IO;
+using System.Threading;
 
 public class Player
 {
     public int NetId;
-    public string Name;
     public static int _NetId = 0; //global netid for all players
     public string Token;
+
     public Vector3 Position;
+    public Vector3 Scale;
+    public float Rotation;
+    public float CamRotation;
+
+    public string Name;
+    public int userId;
+    public bool admin;
+    public int membership;
+
     public Player(string _IpPort)
     {
         IpPort = _IpPort;
         _NetId++;
         NetId = _NetId;
+    }
+
+    public void Message(string message)
+    {
+        new PacketBuilder(6)
+            .String(message)
+            .send(IpPort);
+    }
+    public void Kick(string reason)
+    {
+        new PacketBuilder(7)
+            .String("kick")
+            .String(reason)
+            .send(IpPort);
+        Server.server.DisconnectClient(IpPort);
     }
 
     //NETWORKING STUFF
@@ -57,42 +82,47 @@ public class Player
                     if (Token != null) return;
                     Token = packet.String();
                     //Console.WriteLine(packet.String());//version
+                    try
+                    {
+                        var data = api.checkAuth(Token);
+                        Name = data.Name;
+                        userId = data.userId;
+                        admin = data.admin;
+                        membership = data.membership;
+                    }
+                    catch (Exception e)
+                    {
+                        Kick(e.Message);
+                    }
 
-                    //check for auth here
+
+
+                    Message(Game.MOTD);
+                    Game.MessageAll($"<color:FF7A00>[SERVER] : \\c0 {Name} connected to the server.");
 
                     new PacketBuilder(1)
                            .u32((uint)NetId)   //netid
                            .u32((uint)(Game.Bricks.Count))//brickcount
-                           .u32((uint)NetId)    //userid
-                           .String("josh")      //name
-                           .u8(0)               //admin
-                           .u8(0)               //membership
+                           .u32((uint)userId)    //userid
+                           .String(Name)      //name
+                           .Bool(admin)               //admin
+                           .u8((uint)membership)               //membership
                            .u32(1)              //gameid
                            .String("CSHill Test")//gamename
                            .send(IpPort);
 
-                    new PacketBuilder(7)
-                        .String("BaseSize")
-                        .u32((uint)(Game.Environment.baseSize))
-                        .send(IpPort);
+                    new scripts.player.SendEnv(IpPort);
 
-                    new scripts.world.SendBRK(IpPort);
-                    string attributes = "bci";
-                    new PacketBuilder(4)
-                        .String(attributes)
-                        .u32((uint)NetId)
-                        .String("orbit")
-                        .u32((uint)NetId)
-                        .u8(1)
-                        .send(IpPort);
+                    new Thread(() => new scripts.world.SendBRK(IpPort, NetId)).Start();
 
                     break;
                 }
-            case 2:
+            case 2://position
                 {
+
                     break;
                 }
-            case 3:
+            case 3://commands and chat
                 {
                     if (packet.String() != "chat") return;
                     new PacketBuilder(6)

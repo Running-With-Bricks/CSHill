@@ -2,12 +2,28 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 public class Color
 {
     public int r;
     public int g;
     public int b;
+
+    public static string formatHex(string input)
+    {
+        Regex COLOR_REGEX = new("/(\\[#[0-9a-fA-F]{6}\\])/g");
+        var match = COLOR_REGEX.Match(input);
+        Console.WriteLine(match);
+        //if (!match)
+        //    return input;
+        //match.forEach((colorCode) => {
+        //let hexCol = colorCode.replace(/[[#\]]/g, "").toUpperCase();
+        //hexCol = colorModule_1.default.rgbToBgr(hexCol);
+        //input = input.replace(colorCode, `< color:${ hexCol}>`);
+    
+        return input;
+    }
     public Color(int r, int g, int b)
     {
         this.r = r;

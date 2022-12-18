@@ -12,7 +12,7 @@ public class Brick
     public string Name;
     public Vector3 Position;
     public Vector3 Scale;
-    public float Rotation;
+    public int Rotation;
     public Color Color;
 
     public string Shape;
@@ -20,9 +20,12 @@ public class Brick
     public bool Collision = true;
     public double Visibility;
 
-    public bool lightEnabled = false;
-    public int lightRange;
-    public Color lightColor;
+    public bool LightEnabled = false;
+    public int LightRange;
+    public Color LightColor;
+
+    public bool Clickable;
+    public uint ClickDistance;
 
 
     public Brick( Vector3 position, Vector3 scale, Color color)

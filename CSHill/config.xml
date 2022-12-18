@@ -5,5 +5,9 @@
   <mapName>Example.brk</mapName>
 
   <hostKey></hostKey>
+
+  <local>true</local>
+  <port>42480</port>
+  
   
 </data>

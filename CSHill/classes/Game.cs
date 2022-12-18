@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,6 +9,9 @@ public static class Game
 {
     public static List<Player> Players = new List<Player>();
     public static List<Brick> Bricks = new List<Brick>();
+
+    public static string MOTD = "This server is hosted using <color:E36600>CSHill<color:FFFFFF>!";
+
     public static class Debug
     {
         public static bool PacketInspector = false;
@@ -26,5 +30,14 @@ public static class Game
         public static string mapName;
         public static string mapDirectory;
         public static string hostKey;
+        public static string local;
     }
+
+    public static void MessageAll(string message)
+    {
+        new PacketBuilder(6)
+            .String(message)
+            .broadcast();
+    }
+
 }

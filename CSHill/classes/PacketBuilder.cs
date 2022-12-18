@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System;
 using System.Net.Sockets;
+using Ionic.Zlib;
 
 public class UIntV
 {
@@ -27,15 +28,15 @@ public class UIntV
             return ((int)((BitConverter.ToUInt32(buffer, 0) / 8) + 0x204080), 4);
         }
     }
-    public static byte[] WriteUIntV(byte[] buffer)
+    public static List<byte> WriteUIntV(List<byte> buffer)
     {
-        var length = buffer.Length;
+        var length = buffer.Count;
         // 1 Byte
         if (length < 0x80)
         {
             PacketBuilder size = new(0);
             size.u8((uint)((length << 1) + 1));
-            return size.Data.Concat(buffer).ToArray();
+            return size.Data.Concat(buffer).ToList();
             // 2 Bytes
         }
         else if (length < 0x4080)
@@ -45,7 +46,7 @@ public class UIntV
             //return Buffer.concat([size, buffer]);
             PacketBuilder size = new(0);
             size.u16((ushort)(((length - 0x80) << 2) + 2));
-            return size.Data.Concat(buffer).ToArray();
+            return size.Data.Concat(buffer).ToList();
             // 3 Bytes
         }
         else if (length < 0x204080)
@@ -59,7 +60,7 @@ public class UIntV
             var writeValue = ((length - 0x4080) << 3) + 4;
             size.u8((uint)(writeValue & 0xFF));
             size.u16((ushort)(writeValue >> 8));
-            return size.Data.Concat(buffer).ToArray();
+            return size.Data.Concat(buffer).ToList();
             // 4 Bytes
         }
         else
@@ -69,60 +70,82 @@ public class UIntV
             //return Buffer.concat([size, buffer]);
             PacketBuilder size = new(0);
             size.u32((uint)((length - 0x204080) * 8));
-            return size.Data.Concat(buffer).ToArray();
+            return size.Data.Concat(buffer).ToList();
         }
     }
 }
 public class PacketBuilder
 {
-    public byte[] Data;
+    public List<byte> Data;
     public PacketBuilder(int id)
     {
         if (id != 0)
         {
-            Data = new byte[1];
-            Data[0] = (byte)id;
+            Data = new List<byte>();
+            Data.Add((byte)id);
         }
         else
         {
-            Data = new byte[0];
+            Data = new List<byte>();
         }
     }
     public PacketBuilder u8(uint bite)
     {
-        Data = Data.Append((byte)bite).ToArray();
+        Data.Add((byte)bite);
         return this;
     }
     public PacketBuilder u16(UInt16 bite)
     {
-        Array.Resize(ref Data, Data.Length + 2);
-        BitConverter.GetBytes(bite).CopyTo(Data, Data.Length - 2);
+        Data.AddRange(BitConverter.GetBytes(bite));
         return this;
     }
     public PacketBuilder u32(UInt32 bite)
     {
-        Array.Resize(ref Data, Data.Length + 4);
-        BitConverter.GetBytes(bite).CopyTo(Data, Data.Length - 4);
+        Data.AddRange(BitConverter.GetBytes(bite));
+        return this;
+    }
+    public PacketBuilder i32(Int32 bite)
+    {
+        Data.AddRange(BitConverter.GetBytes(bite));
         return this;
     }
     public PacketBuilder String(string bite)
     {
-        Array.Resize(ref Data, Data.Length + bite.Length);
-        Encoding.ASCII.GetBytes(bite).CopyTo(Data, Data.Length - bite.Length);
+        Data.AddRange(Encoding.ASCII.GetBytes(bite));
         this.u8(0);
         return this;
     }
     public PacketBuilder Float(float bite)
     {
-        Array.Resize(ref Data, Data.Length + 4);
-        BitConverter.GetBytes(bite).CopyTo(Data, Data.Length - 4);
+        Data.AddRange(BitConverter.GetBytes(bite));
         return this;
     }
-
+    public PacketBuilder Bool(bool bite)
+    {
+        var bit = bite ? 1 : 0;
+        Data.Add((byte)bit);
+        return this;
+    }
     public PacketBuilder send(string IpPort)
     {
         Data = UIntV.WriteUIntV(Data);
-        Server.server.Send(IpPort, Data);
+        Server.server.Send(IpPort, Data.ToArray());
+        return this;
+    }
+    public PacketBuilder broadcast()
+    {
+        Data = UIntV.WriteUIntV(Data);
+
+        foreach (var IpPort in Server.server.GetClients())
+        {
+            Server.server.Send(IpPort, Data.ToArray());
+        }
+
+        return this;
+    }
+    public PacketBuilder deflate()
+    {
+        Data = ZlibStream.CompressBuffer(Data.ToArray()).ToList();
         return this;
     }
 }

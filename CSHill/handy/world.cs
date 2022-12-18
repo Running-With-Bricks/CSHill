@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using System.Globalization;
+using System.Net.Sockets;
+using System.Text.RegularExpressions;
 
 namespace scripts.world
 {
@@ -56,9 +56,9 @@ namespace scripts.world
                         }
                 }
                 string[] DATA = line.Split(' ');
-                var ATTRIBUTE = DATA[0].Replace("+", "");
+                var ATTRIBUTE = DATA[0].Replace("\t+", "");
                 var VALUE = string.Join(" ",DATA.Skip(1).ToArray());
-                //Console.WriteLine("{0}", ATTRIBUTE, VALUE);
+                //Console.WriteLine("{0}", ATTRIBUTE);
                 switch (ATTRIBUTE)
                 {
                     case "NAME":
@@ -98,9 +98,9 @@ namespace scripts.world
                         {
                             var colors = VALUE.Split(' ');
                             var lightRange = colors[3];
-                            bricks[currentBrick].lightEnabled = true;
-                            bricks[currentBrick].lightRange = int.Parse(lightRange);
-                            bricks[currentBrick].lightColor = new Color(double.Parse(colors[0], CultureInfo.InvariantCulture), double.Parse(colors[1], CultureInfo.InvariantCulture), double.Parse(colors[2], CultureInfo.InvariantCulture)); ;
+                            bricks[currentBrick].LightEnabled = true;
+                            bricks[currentBrick].LightRange = int.Parse(lightRange);
+                            bricks[currentBrick].LightColor = new Color(double.Parse(colors[0], CultureInfo.InvariantCulture), double.Parse(colors[1], CultureInfo.InvariantCulture), double.Parse(colors[2], CultureInfo.InvariantCulture)); ;
                             continue;
                         }
                     case "SCRIPT":
@@ -111,31 +111,32 @@ namespace scripts.world
                 
                 if (DATA.Length == 10)
                 {
+                    try
+                    {
+                        Brick newBrick = new(
+                            new Vector3(float.Parse(DATA[0], CultureInfo.InvariantCulture), float.Parse(DATA[1], CultureInfo.InvariantCulture), float.Parse(DATA[2], CultureInfo.InvariantCulture)),
+                            new Vector3(float.Parse(DATA[3], CultureInfo.InvariantCulture), float.Parse(DATA[4], CultureInfo.InvariantCulture), float.Parse(DATA[5], CultureInfo.InvariantCulture)),
+                            new Color(float.Parse(DATA[6], CultureInfo.InvariantCulture), float.Parse(DATA[7], CultureInfo.InvariantCulture), float.Parse(DATA[8], CultureInfo.InvariantCulture)));
 
-                    //foreach (var item in DATA)
-                    //{
-                    //    Console.Write(item+" ");
-                    //}
-                    //Console.WriteLine();
-                    Brick newBrick = new(
-                        new Vector3(float.Parse(DATA[0], CultureInfo.InvariantCulture), float.Parse(DATA[1], CultureInfo.InvariantCulture), float.Parse(DATA[2], CultureInfo.InvariantCulture)),
-                        new Vector3(float.Parse(DATA[3], CultureInfo.InvariantCulture), float.Parse(DATA[4], CultureInfo.InvariantCulture), float.Parse(DATA[5], CultureInfo.InvariantCulture)),
-                        new Color(float.Parse(DATA[6], CultureInfo.InvariantCulture), float.Parse(DATA[7], CultureInfo.InvariantCulture), float.Parse(DATA[8], CultureInfo.InvariantCulture)));
+                        newBrick.Visibility = double.Parse(DATA[9], CultureInfo.InvariantCulture);
 
-                    newBrick.Visibility = double.Parse(DATA[9], CultureInfo.InvariantCulture);
-                    
-                    bricks.Add(newBrick);
-                    currentBrick++;
+                        bricks.Add(newBrick);
+                        currentBrick++;
+                    }
+                    catch (Exception)
+                    {
+                    }
                 }
             }
 
             Game.Bricks = bricks;
+            Console.WriteLine("Loaded map {0}", Game.Config.mapDirectory + Game.Config.mapName);
 
         }
     }
     public class SendBRK
     {
-        public SendBRK(string IpPort)
+        public SendBRK(string IpPort, int NetId)
         {
             PacketBuilder pack = new PacketBuilder(17)
                 .u32((uint)(Game.Bricks.Count));
@@ -163,16 +164,55 @@ namespace scripts.world
 
                     .u32((uint)(brick.Color.dec()))
                     .Float((float)(brick.Visibility));
-                var attribute = "";
-                //add attribute stuff, too lazy rn
-                pack.String(attribute);
-                foreach (var item in pack.Data)
+                var attributes = "";
+                if (brick.Rotation != 0)
+                    attributes += "A";
+                if (brick.Shape != null)
+                    attributes += "B";
+                if (brick.LightEnabled)
+                    attributes += "D";
+                if (!brick.Collision)
+                    attributes += "F";
+                if (brick.Clickable)
+                    attributes += "G";
+                pack.String(attributes);
+                for (var i = 0; i < attributes.Length; i++)
                 {
-                    Console.Write(item+ " ");
+                    var ID = attributes[i];
+                    switch (ID)
+                    {
+                        case 'A':
+                            pack.i32(brick.Rotation);
+                            break;
+                        case 'B':
+                            
+                            pack.String(brick.Shape);
+                            break;
+                        case 'D':
+                            pack.u32((uint)brick.LightColor.dec());
+                            pack.u32((uint)brick.LightRange);
+                            break;
+                        case 'G':
+                            pack.Bool(brick.Clickable);
+                            pack.u32(brick.ClickDistance);
+                            break;
+                    }
                 }
-                Console.WriteLine();   
             }
-            pack.send(IpPort);
+            pack
+                .deflate()
+                .send(IpPort);
+            {
+                string attributes = "bci";
+                new PacketBuilder(4)
+                    .String(attributes)
+                    .u32((uint)NetId)
+                    .String("orbit")
+                    .u32((uint)NetId)
+                    .u8(1)
+                    .send(IpPort);
+            }
         }
     }
 }
+
