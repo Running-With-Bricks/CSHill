@@ -7,9 +7,12 @@ using System.Net.Sockets;
 using System.Net;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Collections.Generic;
+
 class Server
 {
     public static SimpleTcpServer server;
+
     static void Main()
     {
         XmlDocument doc = new();
@@ -33,15 +36,17 @@ class Server
 
         server.Events.ClientDisconnected += (sender, e) =>
         {
-            Game.Players.Remove(Game.Players.Find(p => p.IpPort == e.IpPort));
             Console.WriteLine($"Client ({e.IpPort}) disconnected!");
+
+            Player plyr = Game.Players.Find(p => p.IpPort == e.IpPort);
+
+            plyr._RemovePlayer();
+
         };
 
         server.Events.DataReceived += (sender, e) =>
         {
-            var plyr = Game.Players.Find(p => p.IpPort == e.IpPort);
-            plyr.HandleBytes(e.Data.ToArray());
-
+            Game.Players.Find(p => p.IpPort == e.IpPort).HandleBytes(e.Data.ToArray());
         };
 
         while (true)

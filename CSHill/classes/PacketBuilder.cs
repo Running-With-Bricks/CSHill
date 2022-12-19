@@ -126,6 +126,11 @@ public class PacketBuilder
         Data.Add((byte)bit);
         return this;
     }
+    public PacketBuilder Asset(uint assetId)
+    {
+        return this;
+    }
+
     public PacketBuilder send(string IpPort)
     {
         Data = UIntV.WriteUIntV(Data);
@@ -139,6 +144,20 @@ public class PacketBuilder
         foreach (var IpPort in Server.server.GetClients())
         {
             Server.server.Send(IpPort, Data.ToArray());
+        }
+
+        return this;
+    }
+    public PacketBuilder broadcastExcept(string IpPorts)
+    {
+        Data = UIntV.WriteUIntV(Data);
+
+        foreach (var IpPort in Server.server.GetClients())
+        {
+            if (IpPorts != IpPort)
+            {
+                Server.server.Send(IpPort, Data.ToArray());
+            }
         }
 
         return this;

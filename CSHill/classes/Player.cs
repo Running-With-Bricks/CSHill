@@ -5,35 +5,57 @@ using System.Net.Sockets;
 using Ionic.Zlib;
 using System.IO;
 using System.Threading;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public class Player
 {
-    public int NetId;
-    public static int _NetId = 0; //global netid for all players
+    public uint NetId;
+    public static uint _NetId = 0; //global netid for all players
     public string Token;
 
-    public Vector3 Position;
-    public Vector3 Scale;
-    public float Rotation;
-    public float CamRotation;
+    public string Socket;
 
-    public string Name;
-    public int userId;
+    public Vector3 Position = new Vector3(0,0,0);
+    public Vector3 Scale = new Vector3(1, 1, 1);
+    public float Rotation;
+
+    public string Name = "Player";
+    public uint userId;
     public bool admin;
-    public int membership;
+    public uint membership;
+    public Color ChatColor = new Color(1.0, 1.0, 1.0);
+
+    public int Score;
+    public string Speech;
+    public uint Speed;
+    public uint JumpPower;
+    public int Health;
+    public int MaxHealth;
+    public bool Alive;
+
+    public Vector3 CameraPosition = new Vector3(0, 0, 0);
+    public Vector3 CameraRotation = new Vector3(0, 0, 0);
+    public int CameraDistance;
+    public uint CameraFOV;
+    public Player CameraObject;
+    public string CameraType;
+
+    public List<uint> BlockedUsers = new();
+    public List<Brick> LocalBricks = new();
+    public Vector3 SpawnPosition = new Vector3(0, 0, 0) ;
+
+    public List<Tool> Inventory = new();
+    public Tool ToolEquipped;
+
+    public Team Team;
+    public Colors Colors = new();
 
     public Player(string _IpPort)
     {
         IpPort = _IpPort;
         _NetId++;
         NetId = _NetId;
-    }
-
-    public void Message(string message)
-    {
-        new PacketBuilder(6)
-            .String(message)
-            .send(IpPort);
     }
     public void Kick(string reason)
     {
@@ -42,6 +64,517 @@ public class Player
             .String(reason)
             .send(IpPort);
         Server.server.DisconnectClient(IpPort);
+    }
+
+    public void ClearMap()
+    {
+        new PacketBuilder(14)
+            .Bool(true)
+            .send(IpPort);
+    }
+
+    public void _Log(string message, bool broadcast = false)
+    {
+        //UNFINISHED (None of this shit exists yet)
+        /*if (!Game.SystemMessages) return;
+
+        if (Broadcast)
+        {
+            return Scripts.Message.MessageAll(message);
+        }
+        else
+        {
+            return Scripts.Message.MessageClient(Socket, message);
+        }
+        */
+    }
+
+    public void _RemovePlayer()
+    {
+        Game.Players.Remove(this);
+        new PacketBuilder(5)
+            .u32(NetId)
+            .broadcastExcept(IpPort);
+    }
+
+    public void TopPrint(string message, uint seconds)
+    {
+        new PacketBuilder(7)
+            .String("topPrint")
+            .String(message)
+            .u32(seconds)
+            .send(IpPort);
+    }
+
+    public void CenterPrint(string message, uint seconds)
+    {
+        new PacketBuilder(7)
+            .String("centerPrint")
+            .String(message)
+            .u32(seconds)
+            .send(IpPort);
+    }
+
+    public void BottomPrint(string message, uint seconds)
+    {
+        new PacketBuilder(7)
+            .String("bottomPrint")
+            .String(message)
+            .u32(seconds)
+            .send(IpPort);
+    }
+
+    public void Prompt(string message)
+    {
+        new PacketBuilder(7)
+            .String("prompt")
+            .String(message)
+            .send(IpPort);
+    }
+
+    public void Message(string message)
+    {
+        new PacketBuilder(6)
+            .String(message)
+            .send(IpPort);
+    }
+
+    public void MessageAll(string message, bool generateTitle = true)
+    {
+        if (generateTitle) message = scripts.chat.GenerateTitle(this, message);
+
+        new PacketBuilder(6)
+            .String(message)
+            .broadcast();
+    }
+
+    public void SetOutfit(Outfit outfit)
+    {
+        //Assets = outfit.Assets;
+        Colors = outfit.Colors;
+
+        scripts.player.createPlayerIds(this, "KLMNOP").broadcast();
+        //CreateAssetIds thing
+    }
+
+    public void SetHealth(int health)
+    {
+        if (health <= 0 && Alive) Kill();
+        if (health > MaxHealth) health = MaxHealth;
+
+        Health = health;
+
+        scripts.player.createPlayerIds(this, "e").send(IpPort);
+    }
+
+    public void SetScore(int score)
+    {
+        Score = score;
+
+        scripts.player.createPlayerIds(this, "X").broadcast();
+    }
+
+    public void SetTeam(Team team)
+    {
+        Team = team;
+
+        scripts.player.createPlayerIds(this, "Y").broadcast();
+    }
+
+    public void SetCameraPosition(Vector3 position)
+    {
+        CameraPosition = position;
+
+        scripts.player.createPlayerIds(this, "567").send(IpPort);
+    }
+
+    public void SetCameraRotation(Vector3 rotation)
+    {
+        CameraRotation = rotation;
+
+        scripts.player.createPlayerIds(this, "89a").send(IpPort);
+    }
+
+    public void SetCameraDistance(int distance)
+    {
+        CameraDistance = distance;
+
+        scripts.player.createPlayerIds(this, "4").send(IpPort);
+    }
+
+    public void SetCameraFOV(uint fov)
+    {
+        CameraFOV = fov;
+
+        scripts.player.createPlayerIds(this, "3").send(IpPort);
+    }
+
+    public void SetCameraObject(Player player)
+    {
+        CameraObject = player;
+
+        scripts.player.createPlayerIds(this, "c").send(IpPort);
+    }
+
+    public void SetCameraType(string cameraType) 
+    {
+        CameraType = cameraType;
+
+        scripts.player.createPlayerIds(this, "b").send(IpPort);
+    }
+
+    public List<Player> GetBlockedPlayers()
+    {
+        List<Player> players = new();
+
+        foreach (var target in Game.Players)
+        {
+            if (target.BlockedUsers.Contains(userId)) players.Add(target);
+        }
+
+        return players;
+    }
+
+    public void AddTool(Tool tool)
+    {
+        if (Inventory.Contains(tool)) throw new Exception("Player already has tool equipped.");
+
+        Inventory.Add(tool);
+
+        new PacketBuilder(11)
+            .Bool(true)
+            .u32((uint)tool._SlotId)
+            .String(tool.Name)
+            .send(IpPort);
+    }
+
+    public void DeleteBricks(Brick[] bricks)
+    {
+        foreach (var brick in bricks)
+        {
+            if (LocalBricks.Contains(brick)) LocalBricks.Remove(brick);
+        }
+
+        PacketBuilder packet = new PacketBuilder(16)
+            .u32((uint)bricks.Length);
+
+        foreach (var brick in bricks) packet.u32(brick.NetId);
+
+        packet.send(IpPort);
+    }
+
+    public void DestroyTool(Tool tool)
+    {
+        if (!Inventory.Contains(tool)) return;
+
+        Inventory.Remove(tool);
+        ToolEquipped = null;
+
+        new PacketBuilder(11)
+            .Bool(false)
+            .u32((uint)tool._SlotId)
+            .String(tool.Name)
+            .send(IpPort);
+    }
+
+    public void EquipTool(Tool tool)
+    {
+        if (!Inventory.Contains(tool)) AddTool(tool);
+        if (ToolEquipped == tool) UnequipTool(tool);
+        if (ToolEquipped != null) //ToolEquipped.Emit("unequipped", this);
+
+        ToolEquipped = tool;
+        //tool.Emit(ToolEquipped, this);
+
+        //CreateAssetIds thing
+    }
+
+    public void UnequipTool(Tool tool)
+    {
+        ToolEquipped = null;
+
+        //tool.Emit("unequipped", this);
+
+        scripts.player.createPlayerIds(this, "h").broadcast();
+    }
+
+    public void SetSpeech(string speech = "")
+    {
+        Speech = speech;
+
+        scripts.player.createPlayerIds(this, "f").broadcast();
+        Task.Delay(3000).ContinueWith((task) => {
+            if (Speech == speech)
+            {
+                Speech = "";
+                scripts.player.createPlayerIds(this, "f").broadcast();
+            }
+        });
+    }
+
+    public void SetSpeed(uint speedValue)
+    {
+        Speed = speedValue;
+
+        scripts.player.createPlayerIds(this, "1").send(IpPort);
+    }
+
+    public void SetJumpPower(uint power)
+    {
+        JumpPower = power;
+
+        scripts.player.createPlayerIds(this, "2").send(IpPort);
+    }
+
+    public void _GetClients()
+    {
+        if (Game.Players.Count <= 1) return;
+
+        var others = Game.Players;
+        others.Remove(this);
+
+        new PacketBuilder(3) //Send all other clients this client
+            .u8(1)
+            .u32(NetId)
+            .String(Name)
+            .u32(userId)
+            .Bool(admin)
+            .u8(membership)
+            .broadcastExcept(IpPort);
+
+        PacketBuilder send = new PacketBuilder(3) //Send this client to all other clients
+            .u8((uint)others.Count);
+
+        foreach (var player in others)
+        {
+            send.u32(player.NetId);
+            send.String(player.Name);
+            send.u32(player.userId);
+            send.Bool(player.admin);
+            send.u8(player.membership);
+        }
+
+        send.send(IpPort);
+    }
+
+    public void _UpdatePositionForOthers()
+    {
+        new PacketBuilder(4)
+            .String("ABCF")
+            .u32(NetId)
+            .Float(Position.x)
+            .Float(Position.y)
+            .Float(Position.z)
+            .Float(Rotation)
+            .broadcastExcept(IpPort);
+    }
+
+    public void NewBrick(Brick brick)
+    {
+        var localBrick = brick.Clone();
+
+        localBrick.Socket = Socket;
+
+        LocalBricks.Add(localBrick);
+
+        PacketBuilder packet = new PacketBuilder(17)
+            .u32(1);
+
+        //AssetDownloader.GetAssetData(localBrick.Model);
+        packet
+            .u32(localBrick.NetId)
+            .Float(localBrick.Position.x)
+            .Float(localBrick.Position.y)
+            .Float(localBrick.Position.z)
+            .Float(localBrick.Scale.x)
+            .Float(localBrick.Scale.y)
+            .Float(localBrick.Scale.z)
+            .u32(localBrick.Color.dec())
+            .Float((float)localBrick.Visibility);
+
+        var attributes = "";
+
+        if (localBrick.Rotation != 0) attributes += "A";
+        if (localBrick.Shape != null) attributes += "B";
+        if (localBrick.LightEnabled) attributes += "D";
+        if (localBrick.Collision) attributes += "F";
+        if (localBrick.Clickable) attributes += "G";
+        if (localBrick.Model != 0) attributes += "C";
+
+        packet.String(attributes);
+
+        if (localBrick.Rotation != 0) packet.u32((uint)localBrick.Rotation);
+        if (localBrick.Shape != null) packet.String(localBrick.Shape);
+        if (localBrick.LightEnabled) packet
+                .u32(localBrick.LightColor.dec())
+                .u32((uint)localBrick.LightRange);
+        if (localBrick.Clickable) packet
+                .Bool(localBrick.Clickable)
+                .u32((uint)localBrick.ClickDistance);
+
+        if (attributes.Contains("C")) packet.Asset(localBrick.Model);
+
+        packet
+            .deflate()
+            .send(IpPort);
+    }
+
+    public void NewBricks(List<Brick> bricks)
+    {
+        List<Brick> localBricks = new();
+
+        foreach (var brick in bricks)
+        {
+            Brick localBrick = brick.Clone();
+            localBrick.Socket = Socket;
+            localBricks.Add(localBrick);
+            LocalBricks.Add(localBrick);
+        }
+
+        //UNFINISHED
+    }
+
+    public void SetPosition(Vector3 position)
+    {
+        Position = position;
+
+        //Emit("moved", Position, Rotation);
+
+        //CreatePlayerIds thing
+    }
+
+    public void SetScale(Vector3 scale)
+    {
+        Scale = scale;
+
+        //CreatePlayerIds thing
+    }
+
+    public void SetAvatar(uint userId)
+    {
+        //UNFINISHED
+    }
+
+    //THESE FUNCTIONS NEED PROMISE STUFF:
+    //AvatarLoaded()
+    //GetUserInfo()
+    //OwnsAsset()
+    //GetRankInGroup()
+
+    public void Kill()
+    {
+        if (!Alive) return;
+
+        Alive = false;
+        Health = 0;
+
+        new PacketBuilder(8)
+            .u32(NetId)
+            .Bool(true)
+            .broadcast();
+
+        //CreatePlayerIds thing
+
+        //Emit("died");
+    }
+
+    public void Respawn()
+    {
+        Vector3 newSpawnPosition;
+
+        if (SpawnPosition != null)
+        {
+            newSpawnPosition = SpawnPosition;
+        } else
+        {
+            Random rand = new Random();
+            newSpawnPosition = new Vector3((float)rand.NextDouble()* Game.Environment.baseSize, (float)rand.NextDouble() * Game.Environment.baseSize,30);
+        }
+
+        SetPosition(newSpawnPosition);
+
+        new PacketBuilder(8)
+            .u32(NetId)
+            .Bool(false)
+            .broadcast();
+
+        Alive = true;
+        Health = MaxHealth;
+        CameraType = "orbit";
+        CameraObject = this;
+        CameraPosition = new Vector3(0, 0, 0);
+        CameraRotation = new Vector3(0, 0, 0);
+        CameraFOV = 60;
+        ToolEquipped = null;
+
+        //CreatePlayerIds thing
+
+        //Emit("respawn");
+    }
+
+    public void _CreateFigures()
+    {
+        //CreatePlayerIds thing
+        //CreateAssetIds wtf???!!!!
+
+        foreach (var player in Game.Players)
+        {
+            if (player != this)
+            {
+                //CreatePlayerIds thing
+                //CreateAssetIds wtf???!!!!
+            }
+        }
+    }
+
+    public void _CreateTools()
+    {
+        foreach (var tool in Game.Tools) AddTool(tool);
+    }
+
+    public void _CreateTeams()
+    {
+        foreach (var team in Game.Teams)
+        {
+            new PacketBuilder(10)
+                .u32(team.NetId)
+                .String(team.Name)
+                .u32(team.Color.dec())
+                .send(IpPort);
+        }
+    }
+
+    public void _CreateBots()
+    {
+        foreach (var bot in Game.Bots)
+        {
+            new PacketBuilder(12)
+                .u32(bot.NetId)
+                .String(bot.Name)
+
+                .Float(bot.Position.x)
+                .Float(bot.Position.y)
+                .Float(bot.Position.z)
+
+                .Float(bot.Rotation.x)
+                .Float(bot.Rotation.y)
+                .Float(bot.Rotation.z)
+
+                .Float(bot.Scale.x)
+                .Float(bot.Scale.y)
+                .Float(bot.Scale.z)
+
+                .u32(bot.Colors.Head.dec())
+                .u32(bot.Colors.Torso.dec())
+                .u32(bot.Colors.LeftArm.dec())
+                .u32(bot.Colors.RightArm.dec())
+                .u32(bot.Colors.LeftLeg.dec())
+                .u32(bot.Colors.RightLeg.dec())
+
+                .String(Color.formatHex(bot.Speech))
+
+                .send(IpPort);
+        }
     }
 
     //NETWORKING STUFF
@@ -101,17 +634,29 @@ public class Player
                     Game.MessageAll($"<color:FF7A00>[SERVER] : \\c0 {Name} connected to the server.");
 
                     new PacketBuilder(1)
-                           .u32((uint)NetId)   //netid
-                           .u32((uint)(Game.Bricks.Count))//brickcount
-                           .u32((uint)userId)    //userid
-                           .String(Name)      //name
-                           .Bool(admin)               //admin
-                           .u8((uint)membership)               //membership
-                           .u32(1)              //gameid
-                           .String("CSHill Test")//gamename
+                           .u32(NetId)                     //netid
+                           .u32((uint)(Game.Bricks.Count)) //brickcount
+                           .u32(userId)                    //userid
+                           .String(Name)                   //name
+                           .Bool(admin)                    //admin
+                           .u8(membership)                 //membership
+                           .u32(1)                         //gameid
+                           .String("CSHill Test")          //gamename
                            .send(IpPort);
 
-                    new scripts.player.SendEnv(IpPort);
+                    new PacketBuilder(3)
+                        .u8(1)
+                        .u32(NetId)
+                        .String(Name)
+                        .u32(userId)
+                        .Bool(admin)
+                        .u8(membership)
+                        .broadcastExcept(IpPort);
+                    
+
+                    scripts.player.SendEnv(IpPort);
+
+                    scripts.player.SendPlayers(IpPort);
 
                     new Thread(() => new scripts.world.SendBRK(IpPort, NetId)).Start();
 
@@ -119,7 +664,12 @@ public class Player
                 }
             case 2://position
                 {
-
+                    Position.x = packet.Float();
+                    Position.y = packet.Float();
+                    Position.z = packet.Float();
+                    Rotation = packet.Float();
+                    CameraRotation.x = packet.Float();
+                    _UpdatePositionForOthers();
                     break;
                 }
             case 3://commands and chat

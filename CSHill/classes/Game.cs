@@ -7,8 +7,11 @@ using System.Threading.Tasks;
 
 public static class Game
 {
-    public static List<Player> Players = new List<Player>();
-    public static List<Brick> Bricks = new List<Brick>();
+    public static List<Player> Players = new();
+    public static List<Brick> Bricks = new();
+    public static List<Tool> Tools = new();
+    public static List<Team> Teams = new();
+    public static List<Bot> Bots = new();
 
     public static string MOTD = "This server is hosted using <color:E36600>CSHill<color:FFFFFF>!";
 

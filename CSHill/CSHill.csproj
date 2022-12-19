@@ -72,6 +72,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="SuperSimpleTcp, Version=3.0.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\SuperSimpleTcp.3.0.5\lib\net48\SuperSimpleTcp.dll</HintPath>
     </Reference>
@@ -90,14 +93,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="classes\AssetDownloader.cs" />
+    <Compile Include="classes\Bot.cs" />
     <Compile Include="classes\Brick.cs" />
     <Compile Include="classes\Color.cs" />
+    <Compile Include="classes\Outfit.cs" />
     <Compile Include="classes\PacketBuilder.cs" />
+    <Compile Include="classes\Team.cs" />
+    <Compile Include="classes\Tool.cs" />
     <Compile Include="classes\Vector3.cs" />
     <Compile Include="classes\Game.cs" />
     <Compile Include="classes\Player.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="handy\api.cs" />
+    <Compile Include="handy\chat.cs" />
     <Compile Include="handy\player.cs" />
     <Compile Include="index.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -105,6 +114,9 @@
     <Compile Include="user_scripts\Example.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>

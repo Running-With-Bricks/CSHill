@@ -136,7 +136,7 @@ namespace scripts.world
     }
     public class SendBRK
     {
-        public SendBRK(string IpPort, int NetId)
+        public SendBRK(string IpPort, uint NetId)
         {
             PacketBuilder pack = new PacketBuilder(17)
                 .u32((uint)(Game.Bricks.Count));
@@ -147,7 +147,7 @@ namespace scripts.world
                 {
                     Console.WriteLine("{0} {1} {2}", brick.Position.x, brick.Position.y, brick.Position.z);
                     Console.WriteLine("{0} {1} {2}", brick.Scale.x, brick.Scale.y, brick.Scale.z);
-                    Console.WriteLine((uint)(brick.Color.dec()));
+                    Console.WriteLine(brick.Color.dec());
                     Console.WriteLine((float)(brick.Visibility));
                 }
 
@@ -162,7 +162,7 @@ namespace scripts.world
                     .Float(brick.Scale.y)
                     .Float(brick.Scale.z)
 
-                    .u32((uint)(brick.Color.dec()))
+                    .u32((brick.Color.dec()))
                     .Float((float)(brick.Visibility));
                 var attributes = "";
                 if (brick.Rotation != 0)
@@ -189,7 +189,7 @@ namespace scripts.world
                             pack.String(brick.Shape);
                             break;
                         case 'D':
-                            pack.u32((uint)brick.LightColor.dec());
+                            pack.u32(brick.LightColor.dec());
                             pack.u32((uint)brick.LightRange);
                             break;
                         case 'G':
@@ -206,9 +206,9 @@ namespace scripts.world
                 string attributes = "bci";
                 new PacketBuilder(4)
                     .String(attributes)
-                    .u32((uint)NetId)
+                    .u32(NetId)
                     .String("orbit")
-                    .u32((uint)NetId)
+                    .u32(NetId)
                     .u8(1)
                     .send(IpPort);
             }
