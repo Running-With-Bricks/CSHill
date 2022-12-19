@@ -34,6 +34,7 @@ public static class Game
         public static string mapDirectory;
         public static string hostKey;
         public static string local;
+        public static int port;
     }
 
     public static void MessageAll(string message)

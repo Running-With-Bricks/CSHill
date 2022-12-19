@@ -16,7 +16,7 @@ public class Player
 
     public string Socket;
 
-    public Vector3 Position = new Vector3(0,0,0);
+    public Vector3 Position = new Vector3(0, 0, 0);
     public Vector3 Scale = new Vector3(1, 1, 1);
     public float Rotation;
 
@@ -43,7 +43,7 @@ public class Player
 
     public List<uint> BlockedUsers = new();
     public List<Brick> LocalBricks = new();
-    public Vector3 SpawnPosition = new Vector3(0, 0, 0) ;
+    public Vector3 SpawnPosition;
 
     public List<Tool> Inventory = new();
     public Tool ToolEquipped;
@@ -141,8 +141,8 @@ public class Player
 
     public void MessageAll(string message, bool generateTitle = true)
     {
+        SetSpeech(message);
         if (generateTitle) message = scripts.chat.GenerateTitle(this, message);
-
         new PacketBuilder(6)
             .String(message)
             .broadcast();
@@ -216,7 +216,7 @@ public class Player
         scripts.player.createPlayerIds(this, "c").send(IpPort);
     }
 
-    public void SetCameraType(string cameraType) 
+    public void SetCameraType(string cameraType)
     {
         CameraType = cameraType;
 
@@ -283,7 +283,7 @@ public class Player
         if (ToolEquipped == tool) UnequipTool(tool);
         if (ToolEquipped != null) //ToolEquipped.Emit("unequipped", this);
 
-        ToolEquipped = tool;
+            ToolEquipped = tool;
         //tool.Emit(ToolEquipped, this);
 
         //CreateAssetIds thing
@@ -303,7 +303,8 @@ public class Player
         Speech = speech;
 
         scripts.player.createPlayerIds(this, "f").broadcast();
-        Task.Delay(3000).ContinueWith((task) => {
+        var length = speech.Length * 500;
+        Task.Delay(length > 5000 ? 5000 : length).ContinueWith((task) => {
             if (Speech == speech)
             {
                 Speech = "";
@@ -380,7 +381,8 @@ public class Player
         PacketBuilder packet = new PacketBuilder(17)
             .u32(1);
 
-        //AssetDownloader.GetAssetData(localBrick.Model);
+        //AssetDownloader.GetAssetData(localBrick.Model); //dunnor what the point of this is or what it is supposed to do
+
         packet
             .u32(localBrick.NetId)
             .Float(localBrick.Position.x)
@@ -440,14 +442,14 @@ public class Player
 
         //Emit("moved", Position, Rotation);
 
-        //CreatePlayerIds thing
+        scripts.player.createPlayerIds(this, "ABC").broadcast();
     }
 
     public void SetScale(Vector3 scale)
     {
         Scale = scale;
 
-        //CreatePlayerIds thing
+        scripts.player.createPlayerIds(this, "GHI").broadcast();
     }
 
     public void SetAvatar(uint userId)
@@ -488,8 +490,10 @@ public class Player
         } else
         {
             Random rand = new Random();
-            newSpawnPosition = new Vector3((float)rand.NextDouble()* Game.Environment.baseSize, (float)rand.NextDouble() * Game.Environment.baseSize,30);
+            newSpawnPosition = new Vector3((float)rand.NextDouble() * (Game.Environment.baseSize / 2), (float)rand.NextDouble() * (Game.Environment.baseSize / 2), 30);
         }
+
+        //Console.WriteLine("{0} {1} {2}", newSpawnPosition.x, newSpawnPosition.y, newSpawnPosition.z);
 
         SetPosition(newSpawnPosition);
 
@@ -576,6 +580,7 @@ public class Player
                 .send(IpPort);
         }
     }
+    
 
     //NETWORKING STUFF
 
@@ -628,8 +633,6 @@ public class Player
                         Kick(e.Message);
                     }
 
-
-
                     Message(Game.MOTD);
                     Game.MessageAll($"<color:FF7A00>[SERVER] : \\c0 {Name} connected to the server.");
 
@@ -659,6 +662,7 @@ public class Player
                     scripts.player.SendPlayers(IpPort);
 
                     new Thread(() => new scripts.world.SendBRK(IpPort, NetId)).Start();
+                    Respawn();
 
                     break;
                 }
@@ -675,9 +679,7 @@ public class Player
             case 3://commands and chat
                 {
                     if (packet.String() != "chat") return;
-                    new PacketBuilder(6)
-                        .String(packet.String())
-                        .send(IpPort);
+                    MessageAll(packet.String());
 
                     break;
                 }

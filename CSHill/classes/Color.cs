@@ -55,6 +55,10 @@ public class Color
     {
         return "#" + r.ToString("X2") + g.ToString("X2") + b.ToString("X2");
     }
+    public string gmlhex()
+    {
+        return "<color:" + r.ToString("X2") + g.ToString("X2") + b.ToString("X2") + ">";
+    }
     public (uint, uint, uint) rgb()
     {
         return (r,g,b);

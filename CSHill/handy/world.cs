@@ -78,7 +78,7 @@ namespace scripts.world
                         }
                     case "MODEL":
                         {
-                            bricks[currentBrick].Model = int.Parse(VALUE);
+                            bricks[currentBrick].Model = uint.Parse(VALUE);
                             continue;
                         }
                     case "NOCOLLISION":

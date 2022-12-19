@@ -13,7 +13,12 @@ public class Bot
     public Vector3 Rotation;
     public Vector3 Scale;
 
-    public string Speech;
+    public string Speech = "";
+    //public Assets Assets = new();
 
     public Colors Colors;
+
+    public bool Destroyed;
+
+
 }

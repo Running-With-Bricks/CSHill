@@ -16,7 +16,7 @@ public class Brick
     public Color Color;
 
     public string Shape;
-    public int Model;
+    public uint Model;
     public bool Collision = true;
     public double Visibility;
     
@@ -74,7 +74,7 @@ public class Brick
             .broadcast();
     }
 
-    public void SetModel(int model)
+    public void SetModel(uint model)
     {
         Model = model;
         new PacketBuilder(9)
