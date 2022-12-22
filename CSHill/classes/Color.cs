@@ -15,7 +15,7 @@ public class Color
         if (input == null) return "";
         Regex COLOR_REGEX = new("\\[#[a-fA-F0-9]{6}\\]");
         var match = COLOR_REGEX.Match(input);
-        Console.WriteLine(match);
+        //Console.WriteLine(match);
         //if (!match)
         //    return input;
         //match.forEach((colorCode) => {

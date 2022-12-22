@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -7,6 +8,29 @@ using System.Threading.Tasks;
 
 public static class Game
 {
+    public class _setData
+    {
+        public class Data
+        {
+
+            [JsonProperty("id")]
+            public uint id { get; set; }
+
+            [JsonProperty("name")]
+            public string Name { get; set; }
+
+            [JsonProperty("description")]
+            public string Description { get; set; }
+
+            [JsonProperty("visits")]
+            public string visits { get; set; }
+        }
+        [JsonProperty("data")]
+        public Data data { get; set; }
+
+    }
+    public static _setData SetData;
+
     public static List<Player> Players = new();
     public static List<Brick> Bricks = new();
     public static List<Tool> Tools = new();
@@ -27,14 +51,6 @@ public static class Game
         public static Color skyColor;
         public static int baseSize;
         public static int sunIntensity;
-    }
-    public static class Config
-    {
-        public static string mapName;
-        public static string mapDirectory;
-        public static string hostKey;
-        public static string local;
-        public static int port;
     }
 
     public static void MessageAll(string message)

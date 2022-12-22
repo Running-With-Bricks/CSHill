@@ -22,8 +22,8 @@ public class api
         public string[] players;
         public GameData()
         {
-            host_key = Game.Config.hostKey;
-            port = Game.Config.port;
+            host_key = Server.Config.hostKey;
+            port = Server.Config.port;
             players = Game.Players.Select(player => player.Token).ToArray();
         }
     }
@@ -52,15 +52,25 @@ public class api
         public User user { get; set; }
     }
 
+    private class PostData
+    {
+        [JsonProperty("set_id")]
+        public uint set_id { get; set; }
+
+
+        [JsonProperty("banned_users")]
+        public uint[] banned_users { get; set; }
+    }
+
     public static (string Name, uint userId, bool admin, uint? membership, string token) checkAuth(string Token)
     {
         static string AUTHENTICATION_API(string token, string hostKey) { return $"https://api.brick-hill.com/v1/auth/verifyToken?token={Uri.EscapeUriString(token)}&host_key={Uri.EscapeUriString(hostKey)}"; };
         Regex UID_REGEX = new(@"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}");
 
-        if (Game.Config.local.ToLower() == "true")
+        if (Server.Config.local)
         {
             id++;
-            return ($"Player{id}", id, false, 1,Token);
+            return ($"Player{id}", id, false, 1, Token);
         }
 
         if (!UID_REGEX.IsMatch(Token))
@@ -68,10 +78,10 @@ public class api
             throw new Exception("Token invalid!");
         };
         id++;
-        HttpResponseMessage response = client.GetAsync(AUTHENTICATION_API(Token, Game.Config.hostKey)).Result;
+        HttpResponseMessage response = client.GetAsync(AUTHENTICATION_API(Token, Server.Config.hostKey)).Result;
 
         string boban = response.Content.ReadAsStringAsync().Result;
-        Console.WriteLine(boban);
+        //Console.WriteLine(boban);
         var plyrdata = JsonConvert.DeserializeObject<PlayerData>(boban);
         uint? v = plyrdata.user.membership.HasValue ? plyrdata.user.membership : 0;
         plyrdata.user.membership = v;
@@ -80,10 +90,32 @@ public class api
     }
     public static async void postServer()
     {
-        string gamdat = JsonConvert.SerializeObject(new GameData());
-        Console.WriteLine(gamdat);
-        HttpResponseMessage response = await client.PostAsync("https://api.brick-hill.com/v1/games/postServer", new StringContent(gamdat, Encoding.UTF8, "application/json"));
-        //await response.Content.ReadAsStringAsync()  //for set id and banned players, implement later
-        Console.WriteLine(await response.Content.ReadAsStringAsync());
+        try
+        {
+            string gamdat = JsonConvert.SerializeObject(new GameData());
+            //Console.WriteLine(gamdat);
+            HttpResponseMessage postresponse = await client.PostAsync("https://api.brick-hill.com/v1/games/postServer", new StringContent(gamdat, Encoding.UTF8, "application/json"));
+            PostData postdata = JsonConvert.DeserializeObject<PostData>(await postresponse.Content.ReadAsStringAsync());  //for set id and banned players, implement later
+                                                                                                                          //Console.WriteLine(await response.Content.ReadAsStringAsync());
+            if (Game.SetData == null)
+            {
+                try
+                {
+                    HttpResponseMessage setresponse = await client.GetAsync($"https://api.brick-hill.com/v1/sets/{postdata.set_id}");
+                    Game.SetData = JsonConvert.DeserializeObject<Game._setData>(await setresponse.Content.ReadAsStringAsync());
+                    Console.WriteLine($"Successfully posted! https://brick-hill.com/play/{Game.SetData.data.id} [{Game.SetData.data.Name}]");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
     }
 }

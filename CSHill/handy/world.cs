@@ -130,7 +130,7 @@ namespace scripts.world
             }
 
             Game.Bricks = bricks;
-            Console.WriteLine("Loaded map {0}", Game.Config.mapDirectory + Game.Config.mapName);
+            Console.WriteLine("Loaded map {0}", Server.Config.mapDirectory + Server.Config.mapName);
 
         }
     }

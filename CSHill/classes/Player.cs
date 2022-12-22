@@ -636,7 +636,7 @@ public class Player
 
                     Message(Game.MOTD);
                     Game.MessageAll($"<color:FF7A00>[SERVER] : \\c0 {Name} connected to the server.");
-
+                    string testGameName() { if (Game.SetData == null) { return "Local"; } else { return Game.SetData.data.Name; }; }
                     new PacketBuilder(1)
                            .u32(NetId)                     //netid
                            .u32((uint)(Game.Bricks.Count)) //brickcount
@@ -645,7 +645,7 @@ public class Player
                            .Bool(admin)                    //admin
                            .u8(membership)                 //membership
                            .u32(1)                         //gameid
-                           .String("CSHill Test")          //gamename
+                           .String(testGameName())          //gamename
                            .send(IpPort);
 
                     new PacketBuilder(3)
