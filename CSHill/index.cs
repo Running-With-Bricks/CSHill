@@ -62,7 +62,7 @@ class Server
         };
 
         if (Game.Config.local.ToLower() == "false")
-            new SetInterval().New(api.postServer, 30000); 
+            new SetInterval().New(api.postServer, 60000); 
 
         while (true)
         {

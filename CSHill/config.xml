@@ -4,9 +4,9 @@
   <mapDirectory>./maps/</mapDirectory>
   <mapName>Example.brk</mapName>
 
-  <hostKey></hostKey>
+  <hostKey>xJ6se24wUvQ2c3TYxLs8ZMWG4xtSBSa6xkN03mcc8D36dRUZ0ABX08Z5p0oclIDh</hostKey>
 
-  <local>true</local>
+  <local>false</local>
   <port>42480</port>
   
   

@@ -23,7 +23,7 @@ public class Player
     public string Name = "Player";
     public uint userId;
     public bool admin;
-    public uint membership;
+    public uint? membership;
     public Color ChatColor = new Color(1.0, 1.0, 1.0);
 
     public int Score;
@@ -618,19 +618,20 @@ public class Player
             case 1://authenitication
                 {
                     if (Token != null) return;
-                    Token = packet.String();
                     //Console.WriteLine(packet.String());//version
                     try
                     {
-                        var data = api.checkAuth(Token);
+                        var data = api.checkAuth(packet.String());
                         Name = data.Name;
                         userId = data.userId;
                         admin = data.admin;
                         membership = data.membership;
+                        Token = data.token;
                     }
                     catch (Exception e)
                     {
-                        Kick(e.Message);
+                        Console.WriteLine(e);
+                        Kick("Token invalid!");
                     }
 
                     Message(Game.MOTD);
@@ -655,7 +656,7 @@ public class Player
                         .Bool(admin)
                         .u8(membership)
                         .broadcastExcept(IpPort);
-                    
+
 
                     scripts.player.SendEnv(IpPort);
 

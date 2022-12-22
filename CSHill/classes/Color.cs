@@ -13,7 +13,7 @@ public class Color
     public static string formatHex(string input)
     {
         if (input == null) return "";
-        Regex COLOR_REGEX = new("/(\\[#[0-9a-fA-F]{6}\\])/g");
+        Regex COLOR_REGEX = new("\\[#[a-fA-F0-9]{6}\\]");
         var match = COLOR_REGEX.Match(input);
         Console.WriteLine(match);
         //if (!match)

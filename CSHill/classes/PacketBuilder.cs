@@ -89,7 +89,7 @@ public class PacketBuilder
             Data = new List<byte>();
         }
     }
-    public PacketBuilder u8(uint bite)
+    public PacketBuilder u8(uint? bite)
     {
         Data.Add((byte)bite);
         return this;
@@ -133,6 +133,7 @@ public class PacketBuilder
 
     public PacketBuilder send(string IpPort)
     {
+        if (Game.Players.Find(player => player.IpPort == IpPort) == null) throw new Exception("player gone");
         Data = UIntV.WriteUIntV(Data);
         Server.server.Send(IpPort, Data.ToArray());
         return this;
