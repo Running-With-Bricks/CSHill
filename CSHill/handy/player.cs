@@ -241,20 +241,33 @@ namespace scripts
         public static async Task<PacketBuilder> createAssetIds(Player player, string ids = "QRSTUVW")
         {
             if (player.Assets.face == 0 && ids.Contains('Q'))
-                ids.Remove(ids.IndexOf('Q'));
+            {
+                ids = ids.Remove(ids.IndexOf('Q'));
+            }
             if (player.Assets.shirt == 0 && ids.Contains('R'))
-                ids.Remove(ids.IndexOf('R'));
+            {
+                ids = ids.Remove(ids.IndexOf('R'),1);
+            }
             if (player.Assets.pants == 0 && ids.Contains('S'))
-                ids.Remove(ids.IndexOf('S'));
+            {
+                ids = ids.Remove(ids.IndexOf('S'),1);
+            }
             if (player.Assets.tshirt == 0 && ids.Contains('T'))
-                ids.Remove(ids.IndexOf('T'));
-
+            {
+                ids = ids.Remove(ids.IndexOf('T'),1);
+            }
             if (player.Assets.hat1 == 0 && ids.Contains('U'))
-                ids.Remove(ids.IndexOf('U'));
+            {
+                ids = ids.Remove(ids.IndexOf('U'),1);
+            }
             if (player.Assets.hat2 == 0 && ids.Contains('V'))
-                ids.Remove(ids.IndexOf('V'));
+            {
+                ids = ids.Remove(ids.IndexOf('V'),1);
+            }
             if (player.Assets.hat3 == 0 && ids.Contains('W'))
-                ids.Remove(ids.IndexOf('W'));
+            {
+                ids = ids.Remove(ids.IndexOf('W'),1);
+            }
 
             PacketBuilder pack = new PacketBuilder(4)
                 .String(ids)

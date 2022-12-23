@@ -29,7 +29,7 @@ public static class Game
         public Data data { get; set; }
 
     }
-    public static _setData SetData;
+    public static _setData SetData = new();
 
     public static List<Player> Players = new();
     public static List<Brick> Bricks = new();

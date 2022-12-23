@@ -12,7 +12,7 @@ public class AssetData
 {
     public string mesh;
     public string texture;
-    public AssetData(string texture = null,string mesh = null)
+    public AssetData(string texture = null, string mesh = null)
     {
         this.mesh = mesh;
         this.texture = texture;
@@ -22,14 +22,14 @@ public class AssetData
 public class AssetDownloader
 {
     public static string AssetAPIUrl(uint itemid) { return "https://api.brick-hill.com/v1/assets/getPoly/1/" + itemid.ToString(); }
-    public static string GetAssetDataUrl(uint assetId) { return "https://api.brick-hill.com/v1/assets/get/" + assetId.ToString(); }
+    public static string GetAssetDataUrl(string assetId) { return "https://api.brick-hill.com/v1/assets/get/" + assetId; }
 
     public static Dictionary<uint, AssetData> Cache = new();
 
-    public static async void FetchAssetUUID(uint assetId)
+    public static async Task<string> FetchAssetUUID(string assetId)
     {
         HttpResponseMessage response = await Server.client.GetAsync(GetAssetDataUrl(assetId));
-        Console.WriteLine(response.RequestMessage.RequestUri.ToString());
+        return response.RequestMessage.RequestUri.ToString().Remove(0,29);
     }
 
     public static async Task<AssetData> GetAssetData(uint itemid)
@@ -38,12 +38,20 @@ public class AssetDownloader
 
         HttpResponseMessage response = await Server.client.GetAsync(AssetAPIUrl(itemid));
         string stringe = await response.Content.ReadAsStringAsync();
-        Console.WriteLine(AssetAPIUrl(itemid));
-        _ItemData item = JsonConvert.DeserializeObject<_ItemData[]>(stringe)[0];
+        _ItemData[] item = {};
+        try
+        {
+             item = JsonConvert.DeserializeObject<_ItemData[]>(stringe);
+        }
+        catch (Exception)
+        {
+            return new AssetData("none","none");
+        }
 
-        FetchAssetUUID(uint.Parse(item.mesh.Remove(0, 8)));
+        string texture = await FetchAssetUUID(item[0].texture.Remove(0, 8));
+        string mesh = item[0].mesh == null ? "none" : await FetchAssetUUID(item[0].mesh.Remove(0, 8));
 
-        Cache[itemid] = new AssetData( item.texture, item.mesh);
+        Cache[itemid] = new AssetData(texture,mesh);
 
         return Cache[itemid];
     }
@@ -56,7 +64,7 @@ public class AssetDownloader
         [JsonProperty("texture")]
         public string texture { get; set; }
 
-        [JsonProperty("texture")]
+        [JsonProperty("mesh")]
         public string mesh { get; set; }
     }
 

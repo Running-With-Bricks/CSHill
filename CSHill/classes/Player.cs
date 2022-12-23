@@ -462,7 +462,26 @@ public class Player
     {
         public class _items
         {
+            [JsonProperty("face")]
+            public uint face { get; set; }
 
+            [JsonProperty("tool")]
+            public uint tool { get; set; }
+
+            [JsonProperty("head")]
+            public uint pants { get; set; }
+
+            [JsonProperty("shirt")]
+            public uint shirt { get; set; }
+
+            [JsonProperty("figure")]
+            public uint figure { get; set; }
+
+            [JsonProperty("tshirt")]
+            public uint tshirt { get; set; }
+
+            [JsonProperty("hats")]
+            public uint[] hats { get; set; }
         }
         public class _colors
         {
@@ -485,6 +504,9 @@ public class Player
             public string right_leg { get; set; }
         }
 
+        [JsonProperty("items")]
+        public _items items { get; set; }
+
         [JsonProperty("colors")]
         public _colors colors { get; set; }
     }
@@ -499,7 +521,14 @@ public class Player
         Colors.RightArm = new Color(data.colors.right_arm);
         Colors.RightLeg = new Color(data.colors.right_leg);
 
-        this.Assets.tshirt
+        this.Assets.face = data.items.face;
+        this.Assets.hat1 = data.items.hats[0];
+        this.Assets.hat2 = data.items.hats[1];
+        this.Assets.hat3 = data.items.hats[2];
+        this.Assets.pants = data.items.pants;
+        this.Assets.shirt = data.items.shirt;
+        this.Assets.tshirt = data.items.tshirt;
+
         scripts.player.createPlayerIds(this,"KLMNOP").broadcast();
         (await scripts.player.createAssetIds(this)).broadcast();
     }

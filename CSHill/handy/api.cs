@@ -97,13 +97,20 @@ public class api
             HttpResponseMessage postresponse = await client.PostAsync("https://api.brick-hill.com/v1/games/postServer", new StringContent(gamdat, Encoding.UTF8, "application/json"));
             PostData postdata = JsonConvert.DeserializeObject<PostData>(await postresponse.Content.ReadAsStringAsync());  //for set id and banned players, implement later
                                                                                                                           //Console.WriteLine(await response.Content.ReadAsStringAsync());
-            if (Game.SetData == null)
+            if (Game.SetData.data == null)
             {
                 try
                 {
                     HttpResponseMessage setresponse = await client.GetAsync($"https://api.brick-hill.com/v1/sets/{postdata.set_id}");
-                    Game.SetData = JsonConvert.DeserializeObject<Game._setData>(await setresponse.Content.ReadAsStringAsync());
-                    Console.WriteLine($"Successfully posted! https://brick-hill.com/play/{Game.SetData.data.id} [{Game.SetData.data.Name}]");
+                    if (postdata.set_id == 0)
+                    {
+                        Console.WriteLine("Failed to post to the games page, retrying in 1 minute");
+                        return;
+                    };
+                    string stringe = await setresponse.Content.ReadAsStringAsync();
+                    Game._setData SetData = JsonConvert.DeserializeObject<Game._setData>(stringe);
+                    Console.WriteLine($"Successfully posted! https://brick-hill.com/play/{SetData.data.id} [{SetData.data.Name}]");
+                    Game.SetData = SetData;
                 }
                 catch (Exception e)
                 {
