@@ -7,6 +7,9 @@ using System.IO;
 using System.Threading;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 public class Player
 {
@@ -27,12 +30,12 @@ public class Player
     public Color ChatColor = new Color(1.0, 1.0, 1.0);
 
     public int Score;
-    public string Speech;
-    public uint Speed;
-    public uint JumpPower;
-    public int Health;
-    public int MaxHealth;
-    public bool Alive;
+    public string Speech = "";
+    public uint Speed = 4;
+    public uint JumpPower = 5;
+    public int Health = 100;
+    public int MaxHealth = 100;
+    public bool Alive = true;
 
     public Vector3 CameraPosition = new Vector3(0, 0, 0);
     public Vector3 CameraRotation = new Vector3(0, 0, 0);
@@ -50,6 +53,7 @@ public class Player
 
     public Team Team;
     public Colors Colors = new();
+    public Assets Assets = new();
 
     public Player(string _IpPort)
     {
@@ -150,7 +154,7 @@ public class Player
 
     public void SetOutfit(Outfit outfit)
     {
-        //Assets = outfit.Assets;
+        Assets = outfit.Assets;
         Colors = outfit.Colors;
 
         scripts.player.createPlayerIds(this, "KLMNOP").broadcast();
@@ -370,7 +374,7 @@ public class Player
             .broadcastExcept(IpPort);
     }
 
-    public void NewBrick(Brick brick)
+    public async void NewBrick(Brick brick)
     {
         var localBrick = brick.Clone();
 
@@ -381,7 +385,10 @@ public class Player
         PacketBuilder packet = new PacketBuilder(17)
             .u32(1);
 
-        //AssetDownloader.GetAssetData(localBrick.Model); //dunnor what the point of this is or what it is supposed to do
+        if (localBrick.Model != 0)
+        {
+            AssetData boban = await AssetDownloader.GetAssetData(localBrick.Model);
+        }
 
         packet
             .u32(localBrick.NetId)
@@ -451,17 +458,61 @@ public class Player
 
         scripts.player.createPlayerIds(this, "GHI").broadcast();
     }
-
-    public void SetAvatar(uint userId)
+    private class _avatarData
     {
-        //UNFINISHED
+        public class _items
+        {
+
+        }
+        public class _colors
+        {
+            [JsonProperty("head")]
+            public string head { get; set; }
+
+            [JsonProperty("torso")]
+            public string torso { get; set; }
+
+            [JsonProperty("left_arm")]
+            public string left_arm { get; set; }
+
+            [JsonProperty("left_leg")]
+            public string left_leg { get; set; }
+
+            [JsonProperty("right_arm")]
+            public string right_arm { get; set; }
+
+            [JsonProperty("right_leg")]
+            public string right_leg { get; set; }
+        }
+
+        [JsonProperty("colors")]
+        public _colors colors { get; set; }
+    }
+    public async void SetAvatar(uint userId)
+    {
+        HttpResponseMessage response =  await Server.client.GetAsync($"https://api.brick-hill.com/v1/games/retrieveAvatar?id={userId}");
+        _avatarData data = JsonConvert.DeserializeObject<_avatarData>(await response.Content.ReadAsStringAsync());
+        Colors.Head = new Color(data.colors.head);
+        Colors.Torso = new Color(data.colors.torso);
+        Colors.LeftArm = new Color(data.colors.left_arm);
+        Colors.LeftLeg = new Color(data.colors.left_leg);
+        Colors.RightArm = new Color(data.colors.right_arm);
+        Colors.RightLeg = new Color(data.colors.right_leg);
+
+        this.Assets.tshirt
+        scripts.player.createPlayerIds(this,"KLMNOP").broadcast();
+        (await scripts.player.createAssetIds(this)).broadcast();
     }
 
-    //THESE FUNCTIONS NEED PROMISE STUFF:
+    //UNFINISHED:
     //AvatarLoaded()
     //GetUserInfo()
     //OwnsAsset()
-    //GetRankInGroup()
+
+    //public async Task<> GetRankInGroup()//who tf actually uses this //people who have games where you join clan for shit idk its useful to have// whats the url for the apihttps://api.brick-hill.com/v1/clan/member?id=${groupId}&user=${user} 
+    //{
+    //    HttpClient client = new();
+    //}
 
     public void Kill()
     {
@@ -475,7 +526,7 @@ public class Player
             .Bool(true)
             .broadcast();
 
-        //CreatePlayerIds thing
+        scripts.player.createPlayerIds(this, "e").send(IpPort);
 
         //Emit("died");
     }
@@ -493,8 +544,6 @@ public class Player
             newSpawnPosition = new Vector3((float)rand.NextDouble() * (Game.Environment.baseSize / 2), (float)rand.NextDouble() * (Game.Environment.baseSize / 2), 30);
         }
 
-        //Console.WriteLine("{0} {1} {2}", newSpawnPosition.x, newSpawnPosition.y, newSpawnPosition.z);
-
         SetPosition(newSpawnPosition);
 
         new PacketBuilder(8)
@@ -511,22 +560,22 @@ public class Player
         CameraFOV = 60;
         ToolEquipped = null;
 
-        //CreatePlayerIds thing
+        scripts.player.createPlayerIds(this, "ebc56789a3h").send(IpPort);
 
         //Emit("respawn");
     }
 
-    public void _CreateFigures()
+    public async void _CreateFigures()
     {
-        //CreatePlayerIds thing
-        //CreateAssetIds wtf???!!!!
+        scripts.player.createPlayerIds(this, "ABCDEFGHIKLMNOPXYf").broadcastExcept(IpPort);
+        (await scripts.player.createAssetIds(this, "QRSTUVWg")).broadcastExcept(IpPort);
 
         foreach (var player in Game.Players)
         {
             if (player != this)
             {
-                //CreatePlayerIds thing
-                //CreateAssetIds wtf???!!!!
+                scripts.player.createPlayerIds(this, "ABCDEFGHIKLMNOPXYf").send(IpPort);
+                (await scripts.player.createAssetIds(this, "QRSTUVWg")).send(IpPort);
             }
         }
     }
@@ -580,7 +629,6 @@ public class Player
                 .send(IpPort);
         }
     }
-    
 
     //NETWORKING STUFF
 
@@ -633,7 +681,7 @@ public class Player
                         Console.WriteLine(e);
                         Kick("Token invalid!");
                     }
-
+                    SetAvatar(userId);
                     Message(Game.MOTD);
                     Game.MessageAll($"<color:FF7A00>[SERVER] : \\c0 {Name} connected to the server.");
                     string testGameName() { if (Game.SetData == null) { return "Local"; } else { return Game.SetData.data.Name; }; }

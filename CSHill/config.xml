@@ -10,7 +10,7 @@
   <port>42480</port>
   
   <!--If enableJS is set to false the V8 engine doesnt initilize which saves on memory usage-->
-  <enableJS>true</enableJS>
+  <enableJS>false</enableJS>
   <scriptsDirectory>./scripts/</scriptsDirectory>
   
   

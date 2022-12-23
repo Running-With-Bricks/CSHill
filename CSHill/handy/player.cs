@@ -40,7 +40,7 @@ namespace scripts
         public static void SendPlayers(string IpPort)
         {
             PacketBuilder pack = new PacketBuilder(3)
-                .u8((uint)Game.Players.Count -1 );
+                .u8((uint)Game.Players.Count - 1);
 
             foreach (var player in Game.Players)
             {
@@ -65,7 +65,7 @@ namespace scripts
 
         }
 
-        public static PacketBuilder createPlayerIds(Player player,string ids = "")
+        public static PacketBuilder createPlayerIds(Player player, string ids = "")
         {
             if (ids == "ALL") ids = "ABCFGHIKLMNOPXYf";
             if (player.Team == null) ids = ids.Replace("Y", "");
@@ -237,6 +237,71 @@ namespace scripts
             return pack;
 
         }
+
+        public static async Task<PacketBuilder> createAssetIds(Player player, string ids = "QRSTUVW")
+        {
+            if (player.Assets.face == 0 && ids.Contains('Q'))
+                ids.Remove(ids.IndexOf('Q'));
+            if (player.Assets.shirt == 0 && ids.Contains('R'))
+                ids.Remove(ids.IndexOf('R'));
+            if (player.Assets.pants == 0 && ids.Contains('S'))
+                ids.Remove(ids.IndexOf('S'));
+            if (player.Assets.tshirt == 0 && ids.Contains('T'))
+                ids.Remove(ids.IndexOf('T'));
+
+            if (player.Assets.hat1 == 0 && ids.Contains('U'))
+                ids.Remove(ids.IndexOf('U'));
+            if (player.Assets.hat2 == 0 && ids.Contains('V'))
+                ids.Remove(ids.IndexOf('V'));
+            if (player.Assets.hat3 == 0 && ids.Contains('W'))
+                ids.Remove(ids.IndexOf('W'));
+
+            PacketBuilder pack = new PacketBuilder(4)
+                .String(ids)
+                .u32(player.NetId);
+            for (int i = 0; i < ids.Length; i++)
+            {
+                var ID = ids[i];
+                switch (ID)
+                {
+                    //just textures
+                    case ('Q')://face
+                        AssetData faceuid = await AssetDownloader.GetAssetData(player.Assets.face);
+                        pack.String(faceuid.texture);
+                        break;
+                    case ('R')://shirt
+                        AssetData shirtuid = await AssetDownloader.GetAssetData(player.Assets.shirt);
+                        pack.String(shirtuid.texture);
+                        break;
+                    case ('S')://pants
+                        AssetData pantsuid = await AssetDownloader.GetAssetData(player.Assets.pants);
+                        pack.String(pantsuid.texture);
+                        break;
+                    case ('T')://tshirt
+                        AssetData tshirtuid = await AssetDownloader.GetAssetData(player.Assets.tshirt);
+                        pack.String(tshirtuid.texture);
+                        break;
+
+                    //textures + models
+                    case ('U')://hat1
+                        AssetData hat1uid = await AssetDownloader.GetAssetData(player.Assets.hat1);
+                        pack.String(hat1uid.mesh);
+                        pack.String(hat1uid.texture);
+                        break;
+                    case ('V')://hat2
+                        AssetData hat2uid = await AssetDownloader.GetAssetData(player.Assets.hat2);
+                        pack.String(hat2uid.mesh);
+                        pack.String(hat2uid.texture);
+                        break;
+                    case ('W')://hat3
+                        AssetData hat3uid = await AssetDownloader.GetAssetData(player.Assets.hat3);
+                        pack.String(hat3uid.mesh);
+                        pack.String(hat3uid.texture);
+                        break;
+                }
+            }
+            return pack;
+        }
     }
-    
+
 }

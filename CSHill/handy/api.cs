@@ -77,7 +77,7 @@ public class api
         {
             throw new Exception("Token invalid!");
         };
-        id++;
+
         HttpResponseMessage response = client.GetAsync(AUTHENTICATION_API(Token, Server.Config.hostKey)).Result;
 
         string boban = response.Content.ReadAsStringAsync().Result;

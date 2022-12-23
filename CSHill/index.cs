@@ -13,11 +13,13 @@ using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using System.ComponentModel;
+using System.Net.Http;
 
 class Server
 {
     public static SimpleTcpServer server;
     public static V8ScriptEngine engine;
+    public static HttpClient client = new();
     static void Main()
     {
         XmlDocument doc = new();
@@ -148,6 +150,13 @@ public static class ListExtensions
     {
         return list.Where(item => predicate(item)).ToList();
     }
+    public static void ForEach<T>(this List<T> list, dynamic function)
+    {
+        foreach (var item in list)
+        {
+            function(item);
+        }
+    }
 }
 
 public class SetInterval
@@ -169,10 +178,6 @@ public class console
     public static void log(dynamic input)
     {
         Console.WriteLine(input);
-    }
-    public static void type(double input)
-    {
-        Console.WriteLine("ok");
     }
 }
 

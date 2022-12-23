@@ -22,7 +22,7 @@ public class Color
         //let hexCol = colorCode.replace(/[[#\]]/g, "").toUpperCase();
         //hexCol = colorModule_1.default.rgbToBgr(hexCol);
         //input = input.replace(colorCode, `< color:${ hexCol}>`);
-    
+
         return input;
     }
     public Color(uint r = 0, uint g = 0, uint b = 0)
@@ -39,7 +39,10 @@ public class Color
     }
     public Color(string hex)
     {
-        hex = hex.Remove(0, 1);
+        if (hex[0] == '#')
+        {
+            hex = hex.Remove(0, 1);
+        }
         uint bigint = Convert.ToUInt32(hex, 16);
         r = (bigint >> 16) & 255;
         g = (bigint >> 8) & 255;
@@ -61,7 +64,7 @@ public class Color
     }
     public (uint, uint, uint) rgb()
     {
-        return (r,g,b);
+        return (r, g, b);
     }
 }
 

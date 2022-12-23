@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using System.Net.Http;
 using Newtonsoft.Json;
+using System.Security;
 
 public class AssetData
 {
     public string mesh;
     public string texture;
-    public AssetData(string mesh, string texture)
+    public AssetData(string texture = null,string mesh = null)
     {
         this.mesh = mesh;
         this.texture = texture;
@@ -20,26 +21,43 @@ public class AssetData
 
 public class AssetDownloader
 {
-    private static HttpClient client = new();
-    public static string AssetAPIUrl(uint assetId) { return "https://api.brick-hill.com/v1/assets/getPoly/1/" + assetId.ToString(); }
+    public static string AssetAPIUrl(uint itemid) { return "https://api.brick-hill.com/v1/assets/getPoly/1/" + itemid.ToString(); }
     public static string GetAssetDataUrl(uint assetId) { return "https://api.brick-hill.com/v1/assets/get/" + assetId.ToString(); }
 
     public static Dictionary<uint, AssetData> Cache = new();
-    
-    public static void FetchAssetUUID(string type, uint assetId)
+
+    public static async void FetchAssetUUID(uint assetId)
     {
-        //https request stuff
-        //UNFINISHED
+        HttpResponseMessage response = await Server.client.GetAsync(GetAssetDataUrl(assetId));
+        Console.WriteLine(response.RequestMessage.RequestUri.ToString());
     }
 
-    public static async Task<AssetData> GetAssetData(uint assetId)
+    public static async Task<AssetData> GetAssetData(uint itemid)
     {
-        if (Cache.ContainsKey(assetId)) return Cache[assetId];
+        if (Cache.ContainsKey(itemid)) return Cache[itemid];
 
-        //AssetData assetData = new();
+        HttpResponseMessage response = await Server.client.GetAsync(AssetAPIUrl(itemid));
+        string stringe = await response.Content.ReadAsStringAsync();
+        Console.WriteLine(AssetAPIUrl(itemid));
+        _ItemData item = JsonConvert.DeserializeObject<_ItemData[]>(stringe)[0];
 
-        HttpResponseMessage response = await client.GetAsync(GetAssetDataUrl(assetId));
-        Console.WriteLine(response.Content);
-        return new AssetData("piisss", "shiiit");
+        FetchAssetUUID(uint.Parse(item.mesh.Remove(0, 8)));
+
+        Cache[itemid] = new AssetData( item.texture, item.mesh);
+
+        return Cache[itemid];
     }
+
+    private class _ItemData
+    {
+        [JsonProperty("type")]
+        public string type { get; set; }
+
+        [JsonProperty("texture")]
+        public string texture { get; set; }
+
+        [JsonProperty("texture")]
+        public string mesh { get; set; }
+    }
+
 }
