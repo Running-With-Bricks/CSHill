@@ -4,13 +4,13 @@
   <mapDirectory>./maps/</mapDirectory>
   <mapName>Example.brk</mapName>
 
-  <hostKey>xJ6se24wUvQ2c3TYxLs8ZMWG4xtSBSa6xkN03mcc8D36dRUZ0ABX08Z5p0oclIDh</hostKey>
+  <hostKey></hostKey>
 
   <local>false</local>
   <port>42480</port>
   
   <!--If enableJS is set to false the V8 engine doesnt initilize which saves on memory usage-->
-  <enableJS>false</enableJS>
+  <enableJS>True</enableJS>
   <scriptsDirectory>./scripts/</scriptsDirectory>
   
   
