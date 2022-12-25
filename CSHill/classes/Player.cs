@@ -146,6 +146,7 @@ public class Player
     public void MessageAll(string message, bool generateTitle = true)
     {
         SetSpeech(message);
+        Console.WriteLine("{0} : {1}",Name,message);
         if (generateTitle) message = scripts.chat.GenerateTitle(this, message);
         new PacketBuilder(6)
             .String(message)
@@ -512,25 +513,32 @@ public class Player
     }
     public async void SetAvatar(uint userId)
     {
-        HttpResponseMessage response =  await Server.client.GetAsync($"https://api.brick-hill.com/v1/games/retrieveAvatar?id={userId}");
-        _avatarData data = JsonConvert.DeserializeObject<_avatarData>(await response.Content.ReadAsStringAsync());
-        Colors.Head = new Color(data.colors.head);
-        Colors.Torso = new Color(data.colors.torso);
-        Colors.LeftArm = new Color(data.colors.left_arm);
-        Colors.LeftLeg = new Color(data.colors.left_leg);
-        Colors.RightArm = new Color(data.colors.right_arm);
-        Colors.RightLeg = new Color(data.colors.right_leg);
+        try
+        {
+            HttpResponseMessage response = await Server.client.GetAsync($"https://api.brick-hill.com/v1/games/retrieveAvatar?id={userId}");
+            string responsestring = await response.Content.ReadAsStringAsync();
+            _avatarData data = JsonConvert.DeserializeObject<_avatarData>(responsestring);
+            Colors.Head = new Color(data.colors.head);
+            Colors.Torso = new Color(data.colors.torso);
+            Colors.LeftArm = new Color(data.colors.left_arm);
+            Colors.LeftLeg = new Color(data.colors.left_leg);
+            Colors.RightArm = new Color(data.colors.right_arm);
+            Colors.RightLeg = new Color(data.colors.right_leg);
 
-        this.Assets.face = data.items.face;
-        this.Assets.hat1 = data.items.hats[0];
-        this.Assets.hat2 = data.items.hats[1];
-        this.Assets.hat3 = data.items.hats[2];
-        this.Assets.pants = data.items.pants;
-        this.Assets.shirt = data.items.shirt;
-        this.Assets.tshirt = data.items.tshirt;
+            this.Assets.face = data.items.face;
+            this.Assets.hat1 = data.items.hats[0];
+            this.Assets.hat2 = data.items.hats[1];
+            this.Assets.hat3 = data.items.hats[2];
+            this.Assets.pants = data.items.pants;
+            this.Assets.shirt = data.items.shirt;
+            this.Assets.tshirt = data.items.tshirt;
 
-        scripts.player.createPlayerIds(this,"KLMNOP").broadcast();
-        (await scripts.player.createAssetIds(this)).broadcast();
+            scripts.player.createPlayerIds(this, "KLMNOP").broadcast();
+            (await scripts.player.createAssetIds(this)).broadcast();
+        }catch(Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 
     //UNFINISHED:
@@ -582,14 +590,11 @@ public class Player
 
         Alive = true;
         Health = MaxHealth;
-        CameraType = "orbit";
-        CameraObject = this;
         CameraPosition = new Vector3(0, 0, 0);
         CameraRotation = new Vector3(0, 0, 0);
-        CameraFOV = 60;
         ToolEquipped = null;
 
-        scripts.player.createPlayerIds(this, "ebc56789a3h").send(IpPort);
+        scripts.player.createPlayerIds(this, "e56789ah").send(IpPort);
 
         //Emit("respawn");
     }
@@ -705,15 +710,17 @@ public class Player
                         membership = data.membership;
                         Token = data.token;
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
-                        Console.WriteLine(e);
                         Kick("Token invalid!");
+                        Console.WriteLine($"{IpPort} failed to authenticate");
+                        return;
                     }
+                    Console.WriteLine($"Client {IpPort} autheniticated as {Name}");
                     SetAvatar(userId);
                     Message(Game.MOTD);
                     Game.MessageAll($"<color:FF7A00>[SERVER] : \\c0 {Name} connected to the server.");
-                    string testGameName() { if (Game.SetData == null) { return "Local"; } else { return Game.SetData.data.Name; }; }
+                    string testGameName() { if (Game.SetData.data == null) { return "Local"; } else { return Game.SetData.data.Name; }; }
                     new PacketBuilder(1)
                            .u32(NetId)                     //netid
                            .u32((uint)(Game.Bricks.Count)) //brickcount

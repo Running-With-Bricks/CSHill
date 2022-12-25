@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using System.Net.Http;
 using Newtonsoft.Json;
-
+using System.Threading;
 
 public class api
 {
@@ -60,6 +60,15 @@ public class api
 
         [JsonProperty("banned_users")]
         public uint[] banned_users { get; set; }
+
+        public class Error
+        {
+            [JsonProperty("prettyMessage")]
+            public string prettyMessage { get; set; }
+        }
+
+        [JsonProperty("error")]
+        public Error error { get; set; }
     }
 
     public static (string Name, uint userId, bool admin, uint? membership, string token) checkAuth(string Token)
@@ -95,8 +104,20 @@ public class api
             string gamdat = JsonConvert.SerializeObject(new GameData());
             //Console.WriteLine(gamdat);
             HttpResponseMessage postresponse = await client.PostAsync("https://api.brick-hill.com/v1/games/postServer", new StringContent(gamdat, Encoding.UTF8, "application/json"));
-            PostData postdata = JsonConvert.DeserializeObject<PostData>(await postresponse.Content.ReadAsStringAsync());  //for set id and banned players, implement later
-                                                                                                                          //Console.WriteLine(await response.Content.ReadAsStringAsync());
+            string stringdata = await postresponse.Content.ReadAsStringAsync();
+            PostData postdata = JsonConvert.DeserializeObject<PostData>(stringdata);  //for set id and banned players, implement later
+                                                                                      //Console.WriteLine(await response.Content.ReadAsStringAsync());
+            if(postdata.error != null)
+            {
+                if(postdata.error.prettyMessage == "You can only postServer once every minute")
+                {
+                    Console.WriteLine("Failed to post to the games page, retrying in 1 minute");
+                    return;
+                }
+                Console.WriteLine(postdata.error.prettyMessage);
+                System.Environment.Exit(1);
+                return;
+            }
             if (Game.SetData.data == null)
             {
                 try

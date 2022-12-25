@@ -20,6 +20,7 @@ class Server
     public static SimpleTcpServer server;
     public static V8ScriptEngine engine;
     public static HttpClient client = new();
+    public static bool keepAlive = true;
     static void Main()
     {
         XmlDocument doc = new();
@@ -59,8 +60,11 @@ class Server
             Console.WriteLine($"Client ({e.IpPort}) disconnected!");
 
             Player plyr = Game.Players.Find(p => p.IpPort == e.IpPort);
-
             plyr._RemovePlayer();
+            plyr = null;
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
 
         };
 
@@ -119,7 +123,7 @@ class Server
 
             }).Start();
         }
-        while (true)
+        while (keepAlive)
         {
 
         }

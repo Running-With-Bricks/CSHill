@@ -6,11 +6,11 @@
 
   <hostKey></hostKey>
 
-  <local>false</local>
+  <local>true</local>
   <port>42480</port>
   
   <!--If enableJS is set to false the V8 engine doesnt initilize which saves on memory usage-->
-  <enableJS>True</enableJS>
+  <enableJS>false</enableJS>
   <scriptsDirectory>./scripts/</scriptsDirectory>
   
   

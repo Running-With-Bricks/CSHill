@@ -242,7 +242,7 @@ namespace scripts
         {
             if (player.Assets.face == 0 && ids.Contains('Q'))
             {
-                ids = ids.Remove(ids.IndexOf('Q'));
+                ids = ids.Remove(ids.IndexOf('Q'),1);
             }
             if (player.Assets.shirt == 0 && ids.Contains('R'))
             {
@@ -268,7 +268,6 @@ namespace scripts
             {
                 ids = ids.Remove(ids.IndexOf('W'),1);
             }
-
             PacketBuilder pack = new PacketBuilder(4)
                 .String(ids)
                 .u32(player.NetId);

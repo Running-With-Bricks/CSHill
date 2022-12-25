@@ -28,6 +28,7 @@ public static class Game
         [JsonProperty("data")]
         public Data data { get; set; }
 
+
     }
     public static _setData SetData = new();
 
