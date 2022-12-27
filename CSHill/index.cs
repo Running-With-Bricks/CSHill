@@ -14,6 +14,7 @@ using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using System.ComponentModel;
 using System.Net.Http;
+using Newtonsoft.Json;
 
 class Server
 {
@@ -92,21 +93,38 @@ class Server
 
                     engine.AddHostType(typeof(ListExtensions));
 
-                    Action<ScriptObject, int> setTimeout = (func, delay) =>
-                    {
-                        var timer = new Timer(_ => func.Invoke(false));
-                        timer.Change(delay, Timeout.Infinite);
-                    };
-                    engine.Script._setTimeout = setTimeout;
-                    engine.Execute(@"
-                        function setTimeout(func, delay) {
-                            let args = Array.prototype.slice.call(arguments, 2);
-                            _setTimeout(func.bind(undefined, ...args), delay || 0);
+                    dynamic setup = engine.Evaluate(@"(impl => {
+                        let queue = [], nextId = 0;
+                        const maxId = 1000000000000, getNextId = () => nextId = (nextId % maxId) + 1;
+                        const add = entry => {
+                            const index = queue.findIndex(element => element.due > entry.due);
+                            index >= 0 ? queue.splice(index, 0, entry) : queue.push(entry);
                         }
-                        var sleep = ms => new Promise(r => setTimeout(r, ms));
-                        
-                    ");
-                    Console.WriteLine("V8 initialized");
+                        function set(periodic, func, delay) {
+                            const id = getNextId(), now = Date.now(), args = [...arguments].slice(3);
+                            add({ id, periodic, func: () => func(...args), delay, due: now + delay });
+                            impl.Schedule(queue.length > 0 ? queue[0].due - now : -1);
+                            return id;
+                        };
+                        function clear(id) {
+                            queue = queue.filter(entry => entry.id != id);
+                            impl.Schedule(queue.length > 0 ? queue[0].due - Date.now() : -1);
+                        };
+                        globalThis.setTimeout = set.bind(undefined, false);
+                        globalThis.setInterval = set.bind(undefined, true);
+                        globalThis.clearTimeout = globalThis.clearInterval = clear.bind();
+                        impl.Initialize(() => {
+                            const now = Date.now();
+                            while ((queue.length > 0) && (now >= queue[0].due)) {
+                                const entry = queue.shift();
+                                if (entry.periodic) add({ ...entry, due: now + entry.delay });
+                                entry.func();
+                            }
+                            return queue.length > 0 ? queue[0].due - now : -1;
+                        });
+                    })");
+                    setup(new TimerImpl());
+                    Console.WriteLine("V8 JavaScript engine initialized");
                     engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
 
                     string[] Files = Directory.GetFiles(Config.scriptsDirectory, "*.js");
@@ -163,25 +181,46 @@ public static class ListExtensions
     }
 }
 
-public class SetInterval
+public class SetInterval //pee pee poo poo shitstain 
 {
     public int Delay;
     public Action Action;
-    public bool Destroyed = false;
     public async void New(Action action, int delay)
     {
         action();
         await Task.Delay(delay);
-        if (Destroyed) return;
         New(action, delay);
+    }
+}
+
+public sealed class TimerImpl
+{
+    private Timer _timer;
+    private Func<double> _callback = () => Timeout.Infinite;
+    public void Initialize(dynamic callback) => _callback = () => (double)callback();
+    public void Schedule(double delay)
+    {
+        if (delay < 0)
+        {
+            if (_timer != null)
+            {
+                _timer.Dispose();
+                _timer = null;
+            }
+        }
+        else
+        {
+            if (_timer == null) _timer = new Timer(_ => Schedule(_callback()));
+            _timer.Change(TimeSpan.FromMilliseconds(delay), Timeout.InfiniteTimeSpan);
+        }
     }
 }
 
 public class console
 {
-    public static void log(dynamic input)
+    public static void log(dynamic input = null)
     {
-        Console.WriteLine(input);
+        Console.WriteLine(JsonConvert.SerializeObject(input));
     }
 }
 

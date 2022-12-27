@@ -2,7 +2,7 @@
 <data>
   
   <mapDirectory>./maps/</mapDirectory>
-  <mapName>Example.brk</mapName>
+  <mapName>itemtest.brk</mapName>
 
   <hostKey></hostKey>
 
@@ -10,7 +10,7 @@
   <port>42480</port>
   
   <!--If enableJS is set to false the V8 engine doesnt initilize which saves on memory usage-->
-  <enableJS>false</enableJS>
+  <enableJS>true</enableJS>
   <scriptsDirectory>./scripts/</scriptsDirectory>
   
   
