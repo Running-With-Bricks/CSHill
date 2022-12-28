@@ -54,6 +54,37 @@ public static class Game
         public static int sunIntensity;
     }
 
+    private static Dictionary<string, List<dynamic>> Events = new();
+
+    public static void on(string Event, dynamic func)
+    {
+        if (!Events.ContainsKey(Event))
+        {
+            Events.Add(Event, new List<dynamic>());
+        }
+        Events[Event].Add(func);
+    }
+    public static void off(string Event, dynamic func)
+    {
+        if (!Events.ContainsKey(Event))
+        {
+            Events.Add(Event, new List<dynamic>());
+        }
+        Events[Event].Remove(func);
+    }
+    public static void emit(string Event, params dynamic[] args)
+    {
+        if (!Events.ContainsKey(Event))
+        {
+            return;
+        }
+
+        foreach (dynamic func in Events[Event])
+        {
+            func(args);
+        }
+    }
+
     public static void MessageAll(string message)
     {
         new PacketBuilder(6)

@@ -53,7 +53,9 @@ class Server
         server.Events.ClientConnected += (sender, e) =>
         {
             Console.WriteLine($"Client ({e.IpPort}) connected!");
-            Game.Players.Add(new Player(e.IpPort));
+            Player plyr = new(e.IpPort);
+            Game.Players.Add(plyr);
+            Game.emit("clientConnected",plyr);
         };
 
         server.Events.ClientDisconnected += (sender, e) =>

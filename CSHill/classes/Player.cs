@@ -11,7 +11,7 @@ using System.Net.Http.Headers;
 using System.Net.Http;
 using Newtonsoft.Json;
 
-public class Player
+public class Player : EventEmitter
 {
     public uint NetId;
     public static uint _NetId = 0; //global netid for all players
@@ -28,6 +28,7 @@ public class Player
     public bool admin;
     public uint? membership;
     public Color ChatColor = new Color(1.0, 1.0, 1.0);
+    public bool autheniticated = false;
 
     public int Score;
     public string Speech = "";
@@ -670,7 +671,6 @@ public class Player
     private byte[] CurrentBytes = { };
     public void HandleBytes(byte[] newBytes)
     {
-
         CurrentBytes = CurrentBytes.Concat(newBytes).ToArray();//add new bytes
         var (messageSize, end) = UIntV.ReadUIntV(CurrentBytes);//get uintv stuff
         if (messageSize + end > CurrentBytes.Length) return; //return if there arent enough bytes
@@ -709,6 +709,7 @@ public class Player
                         admin = data.admin;
                         membership = data.membership;
                         Token = data.token;
+                        autheniticated = true;
                     }
                     catch (Exception)
                     {
@@ -716,6 +717,10 @@ public class Player
                         Console.WriteLine($"{IpPort} failed to authenticate");
                         return;
                     }
+
+                    emit("autheniticated");
+                    Game.emit("newPlayer",this);
+
                     Console.WriteLine($"Client {IpPort} autheniticated as {Name}");
                     SetAvatar(userId);
                     Message(Game.MOTD);
@@ -753,11 +758,16 @@ public class Player
                 }
             case 2://position
                 {
-                    Position.x = packet.Float();
-                    Position.y = packet.Float();
-                    Position.z = packet.Float();
+
+                    var newx = packet.Float();
+                    var newy = packet.Float();
+                    var newz = packet.Float();
                     Rotation = packet.Float();
                     CameraRotation.x = packet.Float();
+                    emit("move",new Vector3(newx,newy,newz),Position);
+                    Position.x = newx;
+                    Position.y = newy;
+                    Position.z = newz;
                     _UpdatePositionForOthers();
                     break;
                 }

@@ -152,6 +152,7 @@
     <Compile Include="classes\AssetDownloader.cs" />
     <Compile Include="classes\Bot.cs" />
     <Compile Include="classes\Brick.cs" />
+    <Compile Include="classes\EventEmitter.cs" />
     <Compile Include="classes\Color.cs" />
     <Compile Include="classes\Outfit.cs" />
     <Compile Include="classes\PacketBuilder.cs" />

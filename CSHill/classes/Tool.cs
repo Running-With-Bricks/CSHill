@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-public class Tool
+public class Tool : EventEmitter
 {
     public string Name;
     public int _SlotId;

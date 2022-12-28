@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-public class Brick
+public class Brick : EventEmitter
 {
     public static uint _NetId = 0;
     public uint NetId;
