@@ -141,10 +141,11 @@ class Server
 
             }).Start();
         }
-        while (keepAlive)
+        while (true)
         {
-
+            Console.ReadLine();
         }
+
     }
     public static class Config
     {
