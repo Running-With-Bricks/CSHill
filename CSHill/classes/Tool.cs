@@ -6,8 +6,19 @@ using System.Threading.Tasks;
 
 public class Tool : EventEmitter
 {
+    public static uint _NetId = 0;
+
     public string Name;
-    public int _SlotId;
+    public bool Enabled = true;
+    public uint Model = 0;
+    public uint _SlotId;
+
+    public Tool(string name)
+    {
+        _NetId++;
+        Name = name;
+        _SlotId = _NetId;
+    }
 
     public void Emit()
     {

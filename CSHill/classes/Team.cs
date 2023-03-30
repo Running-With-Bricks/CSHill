@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 public class Team
 {
-
     public static uint _NetId = 0;
 
     public uint NetId;
@@ -15,7 +14,7 @@ public class Team
 
     public Team(string name, Color color)
     {
-        _NetId ++;
+        _NetId++;
         Name = name;
         Color = color;
         NetId = _NetId;
